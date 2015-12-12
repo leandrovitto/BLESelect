@@ -16,6 +16,7 @@
 
 package com.redbear.bleselect;
 
+import java.util.List;
 import java.util.UUID;
 
 import android.app.Service;
@@ -61,8 +62,8 @@ public class RBLService extends Service {
 			.fromString(RBLGattAttributes.BLE_SHIELD_SERVICE);
 	public final static UUID UUID_HEART_RATE_MEASUREMENT =
 			UUID.fromString(RBLGattAttributes.HEART_RATE_MEASUREMENT);*/
-	public final static UUID UUID_CLIENT_CHARACTERISTIC_CONFIG =
-			UUID.fromString(RBLGattAttributes.CLIENT_CHARACTERISTIC_CONFIG);
+	public final static UUID UUID_STM32_ACCELEROMETER_PARAMETER =
+			UUID.fromString(RBLGattAttributes.STM32_ACCELEROMETER_PARAMETER);
 
 	private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
 		@Override
@@ -98,7 +99,7 @@ public class RBLService extends Service {
 				broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
 				Log.w(TAG, "onServicesDiscovered received: " + status);
 			} else {
-				Log.w(TAG, "onServicesDiscovered received: " + status);
+				Log.w(TAG, "onServicesDiscovered not received: " + status);
 			}
 		}
 
@@ -140,7 +141,7 @@ public class RBLService extends Service {
 			final byte[] rx = characteristic.getValue();
 			intent.putExtra(EXTRA_DATA, rx);
 		}else if(UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {*/
-            int flag = characteristic.getProperties();
+          /*  int flag = characteristic.getProperties();
             int format = -1;
             if ((flag & 0x01) != 0) {
                 format = BluetoothGattCharacteristic.FORMAT_UINT16;
@@ -152,7 +153,7 @@ public class RBLService extends Service {
             final int heartRate = characteristic.getIntValue(format, 1);
             Log.d(TAG, String.format("Received heart rate: %d", heartRate));
             intent.putExtra(EXTRA_DATA, String.valueOf(heartRate));
-        /*} else {
+        } else {*/
             // For all other profiles, writes the data formatted in HEX.
             final byte[] data = characteristic.getValue();
 		Log.e(TAG, "----->>BYTE>>>>>"+intent.getStringExtra(RBLService.EXTRA_DATA));
@@ -161,7 +162,7 @@ public class RBLService extends Service {
                 for(byte byteChar : data)
                     stringBuilder.append(String.format("%02X ", byteChar));
                 intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
-            }*/
+            }
         //}
 
 		sendBroadcast(intent);
@@ -342,20 +343,20 @@ public class RBLService extends Service {
 		}
 		mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
 
-		if (UUID_CLIENT_CHARACTERISTIC_CONFIG.equals(characteristic.getUuid())) {
-			BluetoothGattDescriptor descriptor = characteristic
-					.getDescriptor(UUID
-							.fromString(RBLGattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
-			descriptor
-					.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+		// This is specific to Heart Rate Measurement.
+		/*if (UUID_STM32_ACCELEROMETER_PARAMETER.equals(characteristic.getUuid())) {
+			BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
+					UUID.fromString(RBLGattAttributes.STM32_ACCELEROMETER_PARAMETER));
+			descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
 			mBluetoothGatt.writeDescriptor(descriptor);
-		}
+		}*/
+
+
 	}
 
-	public BluetoothGattService getSupportedGattService() {
-		if (mBluetoothGatt == null)
-			return null;
+	public List<BluetoothGattService> getSupportedGattServices() {
+		if (mBluetoothGatt == null) return null;
 
-		return mBluetoothGatt.getService(UUID_CLIENT_CHARACTERISTIC_CONFIG);
+		return mBluetoothGatt.getServices();
 	}
 }

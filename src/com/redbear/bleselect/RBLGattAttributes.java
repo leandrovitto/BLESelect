@@ -25,14 +25,14 @@ import java.util.UUID;
  */
 public class RBLGattAttributes {
 	private static HashMap<String, String> attributes = new HashMap<String, String>();
-	public static String CLIENT_CHARACTERISTIC_CONFIG = "0000a001-0000-1000-8000-00805f9b34fb";
-
+	public static String STM32_ACCELEROMETER_PARAMETER = "0000a001-0000-1000-8000-00805f9b34fb";
+	public static String SERVICE_STM32 = "0000a000-0000-1000-8000-00805f9b34fb";
 
 	static {
 		// Sample Services.
-		attributes.put("0000a000-0000-1000-8000-00805f9b34fb", "Unknown Service");
+		attributes.put("0000a000-0000-1000-8000-00805f9b34fb", "SERVICE_STM32");
 		// Sample Characteristics.
-		attributes.put("0000a001-0000-1000-8000-00805f9b34fb","Unknown Characteristic");
+		attributes.put("0000a001-0000-1000-8000-00805f9b34fb","STM32_ACCELEROMETER_PARAMETER");
 	}
 
 	public static String lookup(String uuid, String defaultName) {

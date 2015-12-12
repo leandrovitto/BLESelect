@@ -8,19 +8,23 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
+import java.util.Vector;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
@@ -39,16 +43,31 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.ExpandableListView;
+import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
+
+
 
 public class BLESelect extends Activity {
 	private final static String TAG = BLESelect.class.getSimpleName();
 
 	private RBLService mBluetoothLeService;
 	private BluetoothAdapter mBluetoothAdapter;
+	//private BluetoothGatt mBluetoothGatt;
+	private BluetoothGattCharacteristic mNotifyCharacteristic;
     //private Map<UUID, BluetoothGattCharacteristic> map = new HashMap<UUID, BluetoothGattCharacteristic>();
     public static List<BluetoothDevice> mDevice = new ArrayList<BluetoothDevice>();;
+
+
+	private ExpandableListView mGattServicesList;
+
+	private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics =
+			new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
+
+	private final String LIST_NAME = "NAME";
+	private final String LIST_UUID = "UUID";
 
 	Button lastDeviceBtn = null;
 	Button scanAllBtn = null;
@@ -59,6 +78,8 @@ public class BLESelect extends Activity {
 	private static final int REQUEST_ENABLE_BT = 1;
 	private static final long SCAN_PERIOD = 3000;
 	public static final int REQUEST_CODE = 30;
+	private TextView mConnectionState;
+	private TextView mDataField;
 	private String mDeviceAddress;
 	private String mDeviceName;
 	private boolean flag = true;
@@ -101,13 +122,10 @@ public class BLESelect extends Activity {
 				lastUuid.setText(mDeviceName + " ( " + mDeviceAddress + " )");
 				lastDeviceBtn.setVisibility(View.GONE);
 				scanAllBtn.setText("Disconnect");
-
-				//BluetoothGattCharacteristic characteristic =
-				//		new BluetoothGattCharacteristic(RBLService.UUID_CLIENT_CHARACTERISTIC_CONFIG,2,1);
-				//mBluetoothLeService.setCharacteristicNotification(characteristic,true);
-
-				//getGattService(mBluetoothLeService.getSupportedGattService());
-				startReadRssi();
+				//startReadRssi();
+				//BluetoothGattCharacteristic testing=mBluetoothLeService.getSupportedGattServices().get(2).getCharacteristic(
+				//		RBLService.UUID_STM32_ACCELEROMETER_PARAMETER);
+				//startReadCharacter(testing);
 			} else if (RBLService.ACTION_GATT_DISCONNECTED.equals(action)) {
 				flag = false;
 				connState = false;
@@ -118,26 +136,19 @@ public class BLESelect extends Activity {
 				uuidTv.setText("");
 				lastDeviceBtn.setVisibility(View.VISIBLE);
 			} else if (RBLService.ACTION_GATT_RSSI.equals(action)) {
-				displayData(intent.getStringExtra(RBLService.EXTRA_DATA));
+				//displayData(intent.getStringExtra(RBLService.EXTRA_DATA));
 
 			}else if (RBLService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)){
-				Log.e(TAG, "----->>>>>>>"+intent.getByteArrayExtra(RBLService.EXTRA_DATA));
-                parametro1.setText(intent.getStringExtra(RBLService.EXTRA_DATA));
+				//displayGattServices(mBluetoothLeService.getSupportedGattServices());
+				//Log.i(TAG, "BYTE EXSTRADATA:" + RBLService.EXTRA_DATA.getBytes());
+				//displayData2(intent.getStringExtra(RBLService.EXTRA_DATA).getBytes());
+				displaySTM32GattServices(mBluetoothLeService.getSupportedGattServices());
+
             }
 		}
 	};
 
-    private void getGattService(BluetoothGattService gattService) {
-        if (gattService == null)
-            return;
 
-        BluetoothGattCharacteristic characteristic = gattService.getCharacteristic(RBLService.UUID_CLIENT_CHARACTERISTIC_CONFIG);
-        //map.put(characteristic.getUuid(), characteristic);
-
-
-        //mBluetoothLeService.setCharacteristicNotification(characteristic,true);
-        mBluetoothLeService.readCharacteristic(characteristic);
-    }
 
 	private void writeToFile(String flash) {
 		File sdfile = new File(path, fname);
@@ -222,6 +233,23 @@ public class BLESelect extends Activity {
 		}.start();
 	}
 
+	private void startReadCharacter(final BluetoothGattCharacteristic cha) {
+		new Thread() {
+			public void run() {
+
+				while (flag) {
+					mBluetoothLeService.readCharacteristic(cha);
+
+					try {
+						sleep(500);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+		}.start();
+	}
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -230,10 +258,17 @@ public class BLESelect extends Activity {
 		getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.title);
 
 		uuidTv = (TextView) findViewById(R.id.uuid);
-
 		lastUuid = (TextView) findViewById(R.id.lastDevice);
-
 		parametro1=(TextView) findViewById(R.id.param1);
+
+		// Sets up UI references.
+		((TextView) findViewById(R.id.device_address)).setText(mDeviceAddress);
+		mGattServicesList = (ExpandableListView) findViewById(R.id.gatt_services_list);
+		mGattServicesList.setOnChildClickListener(servicesListClickListner);
+		mConnectionState = (TextView) findViewById(R.id.connection_state);
+		mDataField = (TextView) findViewById(R.id.data_value);
+		//getActionBar().setTitle(mDeviceName);
+		//getActionBar().setDisplayHomeAsUpEnabled(true);
 
 		String connDeviceInfo = readConnDevice();
 		if (connDeviceInfo == null) {
@@ -439,6 +474,142 @@ public class BLESelect extends Activity {
 
 		super.onActivityResult(requestCode, resultCode, data);
 	}
+
+
+	// Demonstrates how to iterate through the supported GATT Services/Characteristics.
+	// In this sample, we populate the data structure that is bound to the ExpandableListView
+	// on the UI.     displayGattServices(mBluetoothLeService.getSupportedGattServices());
+	private void displaySTM32GattServices(List<BluetoothGattService> gattServices){
+		if (gattServices == null) return;
+		String uuid = null;
+		//caratteristiche di questo servizio
+		String unknownCharaString = getResources().getString(R.string.unknown_characteristic);
+
+		ArrayList<HashMap<String, String>> gattCharacteristicGroupData = new ArrayList<HashMap<String, String>>();
+
+
+		for (BluetoothGattService gattService : gattServices) {
+			List<BluetoothGattCharacteristic> gattCharacteristics = gattService.getCharacteristics();
+
+			ArrayList<BluetoothGattCharacteristic> charas = new ArrayList<BluetoothGattCharacteristic>();
+			uuid = gattService.getUuid().toString();
+
+			if(uuid.equals(RBLGattAttributes.SERVICE_STM32)) {
+				// Loops through available Characteristics.
+				for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
+					mBluetoothLeService.readCharacteristic(gattCharacteristic);
+					Log.i(TAG, "PERMISSION:" + gattCharacteristic.getValue());
+					charas.add(gattCharacteristic);
+					HashMap<String, String> currentCharaData = new HashMap<String, String>();
+					uuid = gattCharacteristic.getUuid().toString();
+					currentCharaData.put(LIST_NAME, RBLGattAttributes.lookup(uuid, unknownCharaString));
+					currentCharaData.put(LIST_UUID, uuid);
+					gattCharacteristicGroupData.add(currentCharaData);
+				}
+
+				Log.i(TAG, "CHARETECR" + gattCharacteristicGroupData.get(0).toString());
+
+				final byte[] bytes =charas.get(0).getValue();
+				//String value = Arrays.toString();
+
+				//bytes.toString()
+
+				Log.i(TAG, "CHAREfdfdffTECR" + charas.get(0).getValue());
+
+
+			}
+		}
+	}
+
+
+
+	private void displayGattServices(List<BluetoothGattService> gattServices) {
+		if (gattServices == null) return;
+		String uuid = null;
+		String unknownServiceString = getResources().getString(R.string.unknown_service);
+		String unknownCharaString = getResources().getString(R.string.unknown_characteristic);
+		ArrayList<HashMap<String, String>> gattServiceData = new ArrayList<HashMap<String, String>>();
+		ArrayList<ArrayList<HashMap<String, String>>> gattCharacteristicData
+				= new ArrayList<ArrayList<HashMap<String, String>>>();
+		mGattCharacteristics = new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
+
+		// Loops through available GATT Services.
+		for (BluetoothGattService gattService : gattServices) {
+			HashMap<String, String> currentServiceData = new HashMap<String, String>();
+			uuid = gattService.getUuid().toString();
+			currentServiceData.put(
+					LIST_NAME, RBLGattAttributes.lookup(uuid, unknownServiceString));
+			currentServiceData.put(LIST_UUID, uuid);
+			gattServiceData.add(currentServiceData);
+
+			ArrayList<HashMap<String, String>> gattCharacteristicGroupData =
+					new ArrayList<HashMap<String, String>>();
+			List<BluetoothGattCharacteristic> gattCharacteristics =
+					gattService.getCharacteristics();
+			ArrayList<BluetoothGattCharacteristic> charas =
+					new ArrayList<BluetoothGattCharacteristic>();
+
+			// Loops through available Characteristics.
+			for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
+				charas.add(gattCharacteristic);
+				HashMap<String, String> currentCharaData = new HashMap<String, String>();
+				uuid = gattCharacteristic.getUuid().toString();
+				currentCharaData.put(
+						LIST_NAME, RBLGattAttributes.lookup(uuid, unknownCharaString));
+				currentCharaData.put(LIST_UUID, uuid);
+				gattCharacteristicGroupData.add(currentCharaData);
+			}
+			mGattCharacteristics.add(charas);
+			gattCharacteristicData.add(gattCharacteristicGroupData);
+		}
+
+		SimpleExpandableListAdapter gattServiceAdapter = new SimpleExpandableListAdapter(
+				this,
+				gattServiceData,
+				android.R.layout.simple_expandable_list_item_2,
+				new String[] {LIST_NAME, LIST_UUID},
+				new int[] { android.R.id.text1, android.R.id.text2 },
+				gattCharacteristicData,
+				android.R.layout.simple_expandable_list_item_2,
+				new String[] {LIST_NAME, LIST_UUID},
+				new int[] { android.R.id.text1, android.R.id.text2 }
+		);
+		mGattServicesList.setAdapter(gattServiceAdapter);
+	}
+
+	// If a given GATT characteristic is selected, check for supported features.  This sample
+	// demonstrates 'Read' and 'Notify' features.  See
+	// http://d.android.com/reference/android/bluetooth/BluetoothGatt.html for the complete
+	// list of supported characteristic features.
+	private final ExpandableListView.OnChildClickListener servicesListClickListner =
+			new ExpandableListView.OnChildClickListener() {
+				@Override
+				public boolean onChildClick(ExpandableListView parent, View v, int groupPosition,
+											int childPosition, long id) {
+					if (mGattCharacteristics != null) {
+						final BluetoothGattCharacteristic characteristic =
+								mGattCharacteristics.get(groupPosition).get(childPosition);
+						final int charaProp = characteristic.getProperties();
+						if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
+							// If there is an active notification on a characteristic, clear
+							// it first so it doesn't update the data field on the user interface.
+							if (mNotifyCharacteristic != null) {
+								mBluetoothLeService.setCharacteristicNotification(
+										mNotifyCharacteristic, false);
+								mNotifyCharacteristic = null;
+							}
+							mBluetoothLeService.readCharacteristic(characteristic);
+						}
+						if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
+							mNotifyCharacteristic = characteristic;
+							mBluetoothLeService.setCharacteristicNotification(
+									characteristic, true);
+						}
+						return true;
+					}
+					return false;
+				}
+			};
+
+
 }
-
-
