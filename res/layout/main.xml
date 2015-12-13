@@ -5,173 +5,117 @@
     android:background="#FFF"
     android:orientation="vertical" >
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:orientation="vertical" >
+        android:layout_height="349dp">
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical" >
+            android:layout_height="match_parent">
 
             <LinearLayout
+                android:orientation="horizontal"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="2"
-                android:orientation="vertical" >
+                android:layout_height="match_parent">
 
                 <TextView
+                    android:id="@+id/text"
                     android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1" />
+                    android:layout_height="wrap_content"
+                    android:text="@string/lastConnectLab"
+                    android:textColor="#000"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_marginTop="10dp" />
 
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1" >
+                <TextView
+                    android:id="@+id/lastDevice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textColor="#000"
+                    android:textSize="17sp"
+                    android:layout_alignParentTop="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_marginTop="10dp" />
 
-                    <TextView
-                        android:id="@+id/lastDevice"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text=""
-                        android:textColor="#000"
-                        android:textSize="17sp"
-                        android:layout_alignParentTop="true"
-                        android:layout_alignParentStart="true" />
-                </RelativeLayout>
             </LinearLayout>
-        </LinearLayout>
 
-        <TextView
-            android:id="@+id/text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/lastConnectLab"
-            android:textColor="#000"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_centerVertical="true"
-            android:layout_alignParentStart="true" />
+        </RelativeLayout>
 
         <LinearLayout
+            android:orientation="vertical"
             android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/uuid"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/no_connected"
+                android:textColor="#000"
+                android:textSize="30dp"
+                android:layout_centerVertical="true"
+                android:textStyle="bold"
+                android:layout_marginTop="150dp" />
+
+            <TextView
+                android:id="@+id/param1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#000"
+                android:textSize="30sp"
+                android:layout_centerHorizontal="true"
+                android:layout_alignParentBottom="true"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="921dp"
+        android:layout_height="201dp">
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical" >
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="144dp"
+            android:weightSum="1">
 
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="2" >
+            <Button
+                android:id="@+id/ConnLastDevice"
+                android:layout_width="200dp"
+                android:layout_height="100dp"
+                android:background="@drawable/red_button"
+                android:text="@string/connLastDevice"
+                android:visibility="visible"
+                android:layout_centerVertical="true"
+                android:layout_alignParentStart="true"
+                android:singleLine="false"
+                android:layout_weight="0"
+                android:textStyle="bold"
+                android:textSize="20dp" />
 
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_alignBottom="@+id/uuid"
-                    android:layout_alignParentStart="true">
-
-                    <LinearLayout
-                        android:orientation="vertical"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent">
-
-                        <TextView
-                            android:id="@+id/uuid"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text=""
-                            android:textColor="#000"
-                            android:textSize="17sp"
-                            android:layout_centerVertical="true" />
-
-                        <TextView
-                            android:id="@+id/param1"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="test"
-                            android:textColor="#000"
-                            android:textSize="17sp"
-                            android:layout_centerHorizontal="true"
-                            android:layout_alignParentBottom="true" />
-                    </LinearLayout>
-
-                </RelativeLayout>
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1" >
-
-                <Button
-                    android:id="@+id/ConnLastDevice"
-                    android:layout_width="200dp"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/red_button"
-                    android:text="@string/connLastDevice"
-                    android:visibility="invisible"
-                    android:layout_centerVertical="true"
-                    android:layout_alignParentStart="true" />
-            </RelativeLayout>
+            <Button
+                android:id="@+id/ScanAll"
+                android:layout_width="200dp"
+                android:layout_height="100dp"
+                android:background="@drawable/red_button"
+                android:text="@string/scanAll"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentStart="true"
+                android:layout_marginStart="150dp"
+                android:textStyle="bold"
+                android:textSize="30dp"
+                android:layout_marginTop="15dp" />
 
         </LinearLayout>
 
-    </LinearLayout>
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1" >
-
-        <Button
-            android:id="@+id/ScanAll"
-            android:layout_width="200dp"
-            android:layout_height="wrap_content"
-            android:background="@drawable/red_button"
-            android:text="@string/scanAll"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentStart="true"
-            android:layout_marginStart="122dp" />
     </RelativeLayout>
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="287dp">
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <TextView android:id="@+id/connection_state"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/disconnected"
-                android:textSize="18sp"/>
-
-            <TextView android:id="@+id/device_address"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textSize="18sp"/>
-
-            <TextView android:id="@+id/data_value"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/no_data"
-                android:textSize="18sp"/>
-        </RelativeLayout>
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <ExpandableListView android:id="@+id/gatt_services_list"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
-        </RelativeLayout>
-
-    </RelativeLayout>
 </LinearLayout>

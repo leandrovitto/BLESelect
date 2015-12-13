@@ -14,7 +14,8 @@
     <string name="label_data">Data:</string>
     <string name="label_device_address">Device address:</string>
     <string name="label_state">State:</string>
-    <string name="lastConnectLab">Last connected device:</string>
+    <string name="lastConnectLab">Memory Device:</string>
+    <string name="no_connected">No Connected</string>
     <string name="no_data">No data</string>
     <string name="scanAll">Scan All</string>
     <string name="title">BLE</string>

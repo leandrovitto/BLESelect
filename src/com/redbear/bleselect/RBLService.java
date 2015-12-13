@@ -160,7 +160,7 @@ public class RBLService extends Service {
             if (data != null && data.length > 0) {
                 final StringBuilder stringBuilder = new StringBuilder(data.length);
                 for(byte byteChar : data)
-                    stringBuilder.append(String.format("%02X ", byteChar));
+                    stringBuilder.append(String.format("%02X ggg ", byteChar));
                 intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
             }
         //}
@@ -343,13 +343,15 @@ public class RBLService extends Service {
 		}
 		mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
 
+
 		// This is specific to Heart Rate Measurement.
-		/*if (UUID_STM32_ACCELEROMETER_PARAMETER.equals(characteristic.getUuid())) {
+
+		if (UUID_STM32_ACCELEROMETER_PARAMETER.equals(characteristic.getUuid())) {
 			BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
 					UUID.fromString(RBLGattAttributes.STM32_ACCELEROMETER_PARAMETER));
 			descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
 			mBluetoothGatt.writeDescriptor(descriptor);
-		}*/
+		}
 
 
 	}

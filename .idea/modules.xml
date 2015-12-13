@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/BLESelect.iml" filepath="$PROJECT_DIR$/BLESelect.iml" />
+      <module fileurl="file://$PROJECT_DIR$/bluestsdk/bluestsdk.iml" filepath="$PROJECT_DIR$/bluestsdk/bluestsdk.iml" />
     </modules>
   </component>
 </project>
