@@ -207,7 +207,7 @@ public class BLESelect extends Activity {
 
 	private void displayData_STM32(String data) {
 		if (data != null) {
-			parametro1.setText("Parametri BLE:\t" + data);
+			parametro1.setText("Accelerometro:\t" + data);
 		}
 	}
 
@@ -238,7 +238,7 @@ public class BLESelect extends Activity {
 					mBluetoothLeService.readCharacteristic(cha);
 
 					try {
-						sleep(1000);
+						sleep(500);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
@@ -718,31 +718,56 @@ public class BLESelect extends Activity {
 			};
 
 	private void displayCharacteristic(final BluetoothGattCharacteristic characteristic) {
-		String msg = null;
-		final byte[] data = characteristic.getValue();
-		int[] intArray = new int[data.length];
-		final StringBuilder stringBuilder = new StringBuilder(data.length);
-		for (int k = 0; k < data.length; k++) {
-			Byte b1 = new Byte(data[k]);
-			intArray[k] = b1.intValue();
-			//Log.i(TAG, "-" + intArray[k]);
-			stringBuilder.append(Integer.toString(intArray[k]) + " | ");
-		}
 
-		String convertedtoHex=byteArrayToHex(data);
-		Log.i(TAG,"HEX:"+ convertedtoHex);
-		int test=Integer.decode(convertedtoHex.substring(1,4));
-		Log.i(TAG, Integer.toString(test));
-		msg = "ddd";
+
+		String msg;
+		byte[] ADCValue3 = characteristic.getValue();
+		String adc3Hex = ADCValue3.toString()
+				.replace("[", "")   //remove the right bracket
+				.replace("]", ""); //remove the left bracket
+
+//      Log.e("ADC3", "ADC CH3 characteristicvalue from TEST is " + adc3Hex);
+//      Log.i("ADC3", "ADC Last 6CH3 characteristicvalue from TEST is " + adc3Hex.substring(adc3Hex.length() - 6));  //Prints last 6 of this string
+
+		// Get UUID
+		String ch3 = (String.valueOf(characteristic.getUuid()));
+		String ch3UUID = ch3.substring(0, Math.min(ch3.length(), 8));
+//      Log.d("ADC3", "ADC FIRST 6CH3 characteristicvalue from TEST is " + ch3.substring(0, Math.min(ch3.length(), 8)));  //Print first 6 of this string
+
+
+		String adc3hex6 = adc3Hex.substring(adc3Hex.length() - 6);
+
+		StringBuilder sb = new StringBuilder();
+		for (byte b : ADCValue3) {
+			if (sb.length() > 0) {
+				//sb.append(':');
+			}
+			sb.append(String.format("%02x", b)); }
+		StringBuilder sb1 = new StringBuilder();
+		sb1.append(sb.substring(6, 8));
+		sb1.append(sb.substring(4, 6));
+		String test=sb1.toString();
+		Log.w("ADC3", "StringBuilder------ " + sb1);
+		short acc_x = (short) Integer.parseInt(test,16);
+		StringBuilder sb2 = new StringBuilder();
+		sb2.append(sb.substring(10, 12));
+		sb2.append(sb.substring(8, 10));
+		test=sb2.toString();
+		short acc_y = (short) Integer.parseInt(test,16);
+		StringBuilder sb3 = new StringBuilder();
+		sb3.append(sb.substring(14));
+		sb3.append(sb.substring(12, 14));
+		test=sb3.toString();
+		short acc_z = (short) Integer.parseInt(test,16);
+
+		Log.w("ADC3", "StringBuilder " + sb + "****** " + acc_x + " | " + acc_y + " | " + acc_z + " | ");
+		msg = "|X:"+ acc_x + " |Y: " + acc_y + " |Z: " + acc_z + " | ";
 		displayData_STM32(msg);
 
-	}
 
-	public static String byteArrayToHex(byte[] a) {
-		StringBuilder sb = new StringBuilder(a.length * 2);
-		for(byte b: a)
-			sb.append(String.format("%02x", b & 0xff));
-		return sb.toString();
+/********  Used to get raw HEX value   ********/
+
+
 	}
 
 
