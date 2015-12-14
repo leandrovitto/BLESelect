@@ -53,7 +53,7 @@ public class RBLService extends Service {
 	public final static String ACTION_GATT_RSSI = "ACTION_GATT_RSSI";
 	public final static String ACTION_DATA_AVAILABLE = "ACTION_DATA_AVAILABLE";
 	public final static String EXTRA_DATA = "EXTRA_DATA";
-
+	public final static String EXTRA_RSSI="EXTRA_RSSI";
 	/*public final static UUID UUID_BLE_SHIELD_TX = UUID
 			.fromString(RBLGattAttributes.BLE_SHIELD_TX);
 	public final static UUID UUID_BLE_SHIELD_RX = UUID
@@ -125,6 +125,7 @@ public class RBLService extends Service {
 
 	private void broadcastUpdate(final String action, int rssi) {
 		final Intent intent = new Intent(action);
+
 		intent.putExtra(EXTRA_DATA, String.valueOf(rssi));
 		sendBroadcast(intent);
 	}

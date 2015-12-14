@@ -47,6 +47,8 @@ import android.os.IBinder;
 import android.os.Message;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
@@ -56,6 +58,10 @@ import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.redbear.bleselect.sql.Display_items;
+import com.redbear.bleselect.sql.SQLIte_manager;
+import com.redbear.bleselect.sql.SQLite_helper;
+import com.redbear.bleselect.sql.user;
 import com.redbear.bleselect.util.NumberConversion;
 
 import java.lang.Byte;
@@ -84,10 +90,12 @@ public class BLESelect extends Activity {
 
 	Button lastDeviceBtn = null;
 	Button scanAllBtn = null;
+	Button logBtn = null;
 	TextView uuidTv = null;
 	TextView lastUuid = null;
 	TextView parametro1 = null;
-
+	int valori_rssi;
+	int k_conta_rssi=1;
 	private static final int REQUEST_ENABLE_BT = 1;
 	private static final long SCAN_PERIOD = 3000;
 	public static final int REQUEST_CODE = 30;
@@ -101,6 +109,8 @@ public class BLESelect extends Activity {
 
 	String path = Environment.getExternalStorageDirectory().getAbsolutePath();
 	String fname = "flash.txt";
+	SQLIte_manager manager;
+	SQLite_helper hlep;
 
 	private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -135,6 +145,7 @@ public class BLESelect extends Activity {
 				writeToFile(mDeviceName + " ( " + mDeviceAddress + " )");
 				lastUuid.setText(mDeviceName + " ( " + mDeviceAddress + " )");
 				lastDeviceBtn.setVisibility(View.GONE);
+				uuidTv.setText("AVG RSSI...");
 				scanAllBtn.setText("Disconnect");
 
 				startReadRssi();
@@ -145,10 +156,21 @@ public class BLESelect extends Activity {
 				Toast.makeText(getApplicationContext(), "Disconnected",
 						Toast.LENGTH_SHORT).show();
 				scanAllBtn.setText("Scan All");
-
 				lastDeviceBtn.setVisibility(View.VISIBLE);
 			} else if (RBLService.ACTION_GATT_RSSI.equals(action)) {
-				displayData(intent.getStringExtra(RBLService.EXTRA_DATA));
+				//EFFETTUO UNA MEDIA DI 10 VALORI e LI VISUALIZZO
+				//RSSI Ha oscillazioni molto forti causa onde radio
+
+					valori_rssi+=Integer.parseInt(
+							intent.getStringExtra(RBLService.EXTRA_DATA));
+					k_conta_rssi++;
+					if(k_conta_rssi==25){
+						Log.i(TAG, "|||" + valori_rssi/25);
+						displayData(String.valueOf(valori_rssi / 25));
+						k_conta_rssi=1;
+						valori_rssi=0;
+					}
+
 			} else if (RBLService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
 				displayGattServices(mBluetoothLeService.getSupportedGattServices());
 				startReadCharacter(mNotifyCharacteristic);
@@ -201,7 +223,9 @@ public class BLESelect extends Activity {
 
 	private void displayData(String data) {
 		if (data != null) {
-			uuidTv.setText("RSSI:\t" + data);
+			int dBm=Integer.parseInt(data);
+			Log.d(TAG, "RSSI:" + dBm);
+			uuidTv.setText("RSSI:\t" + dBm + " dBm");
 		}
 	}
 
@@ -219,7 +243,7 @@ public class BLESelect extends Activity {
 					mBluetoothLeService.readRssi();
 
 					try {
-						sleep(500);
+						sleep(100);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
@@ -259,16 +283,17 @@ public class BLESelect extends Activity {
 		uuidTv = (TextView) findViewById(R.id.uuid);
 		lastUuid = (TextView) findViewById(R.id.lastDevice);
 		parametro1 = (TextView) findViewById(R.id.param1);
-
-		// Sets up UI references.
-		/*
-		((TextView) findViewById(R.id.device_address)).setText(mDeviceAddress);
-		mGattServicesList = (ExpandableListView) findViewById(R.id.gatt_services_list);
-		mGattServicesList.setOnChildClickListener(servicesListClickListner);
-		mConnectionState = (TextView) findViewById(R.id.connection_state);
-		mDataField = (TextView) findViewById(R.id.data_value);*/
-		//getActionBar().setTitle(mDeviceName);
-		//getActionBar().setDisplayHomeAsUpEnabled(true);
+        //SQL TEST
+		manager=new SQLIte_manager(this);
+		manager.open_DB();
+		user user = new user();
+		user.setAge("25");
+		user.setEmail("amil");
+		user.setName("test");
+		user.setPhone("dfdfdfdf");
+		manager.create(user);
+		Toast.makeText(this, "Submitted", Toast.LENGTH_LONG).show();
+		//********************
 
 		String connDeviceInfo = readConnDevice();
 		if (connDeviceInfo == null) {
@@ -359,6 +384,18 @@ public class BLESelect extends Activity {
 				}
 			}
 		});
+
+		logBtn = (Button) findViewById(R.id.Log);
+		logBtn.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				Intent i = new Intent(getApplicationContext(),Display_items.class);
+				startActivity(i);
+
+				}
+			});
+
 
 		if (!getPackageManager().hasSystemFeature(
 				PackageManager.FEATURE_BLUETOOTH_LE)) {
@@ -769,6 +806,24 @@ public class BLESelect extends Activity {
 
 
 	}
+/*
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+
+		getMenuInflater().inflate(R.menu.main, menu);
+		return true;
+	}
 
 
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		int id = item.getItemId();
+		if (id == R.id.view) {
+			Intent i = new Intent(this, Display_items.class);// starting
+			startActivity(i);
+
+		}
+		return super.onOptionsItemSelected(item);
+	}
+	*/
 }
