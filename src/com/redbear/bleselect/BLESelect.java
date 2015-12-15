@@ -50,7 +50,7 @@ import android.widget.Toast;
 import com.redbear.bleselect.sql.Display_items;
 import com.redbear.bleselect.sql.SQLIte_manager;
 import com.redbear.bleselect.sql.SQLite_helper;
-import com.redbear.bleselect.sql.connection;
+import com.redbear.bleselect.sql.user;
 
 
 public class BLESelect extends Activity {
@@ -138,13 +138,13 @@ public class BLESelect extends Activity {
 				scanAllBtn.setText("Disconnect");
 
 				//SQL TEST
-				manager=new SQLIte_manager(BLESelect.this);
+				/*manager=new SQLIte_manager(BLESelect.this);
 				manager.open_DB();
 				//manager.deleteAll();
 				connection conn = new connection();
 				conn.setData_ora_connected(date);
 				conn.setRssi_avg_at_connected("-20");
-				manager.create(conn);
+				manager.create(conn);*/
 				Toast.makeText(BLESelect.this, "Submitted", Toast.LENGTH_LONG).show();
 				//*************************
 
