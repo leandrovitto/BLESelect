@@ -5,35 +5,45 @@ import android.graphics.Bitmap;
 
 public class user {
  
-	String age;
-	String name;
-	String email;
-	
-	String phone;
-	public String getAge() {
-		return age;
+	String date_connection;
+	String date_disconnection;
+	String rssi_conn;
+
+	public String getRssi_discon() {
+		return rssi_discon;
 	}
-	public void setAge(String age) {
-		this.age = age;
+
+	public void setRssi_discon(String rssi_discon) {
+		this.rssi_discon = rssi_discon;
 	}
-	public String getName() {
-		return name;
+
+	public String getDate_connection() {
+		return date_connection;
 	}
-	public void setName(String name) {
-		this.name = name;
+
+	public void setDate_connection(String date_connection) {
+		this.date_connection = date_connection;
 	}
-	public String getEmail() {
-		return email;
+
+	public String getDate_disconnection() {
+		return date_disconnection;
 	}
-	public void setEmail(String email) {
-		this.email = email;
+
+	public void setDate_disconnection(String date_disconnection) {
+		this.date_disconnection = date_disconnection;
 	}
-	public String getPhone() {
-		return phone;
+
+	public String getRssi_conn() {
+		return rssi_conn;
 	}
-	public void setPhone(String phone) {
-		this.phone = phone;
+
+	public void setRssi_conn(String rssi_conn) {
+		this.rssi_conn = rssi_conn;
 	}
+
+	String rssi_discon;
+
+
 	 
 	
 }

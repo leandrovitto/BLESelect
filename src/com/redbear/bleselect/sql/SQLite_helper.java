@@ -8,14 +8,14 @@ import android.util.Log;
 
 public class SQLite_helper extends SQLiteOpenHelper {
  
-	private static final String DATABASE_NAME = "users_data";
+	private static final String DATABASE_NAME = "data";
 	private static final int DATABASE_VERSION = 1;	
 	public static final String TABLE_USER = "user";
 	public static final String COLUMN_ID = "id";
-	public static final String COLUMN_NAME = "name";
-	public static final String COLUMN_EMAIL = "email";
-	public static final String COLUMN_AGE = "age";
-	public static final String COLUMN_PHONE = "phonenumber";
+	public static final String COLUMN_NAME = "date_connection";
+	public static final String COLUMN_EMAIL = "date_disconnection";
+	public static final String COLUMN_AGE = "rssi_conn";
+	public static final String COLUMN_PHONE = "rssi_discon";
 	
 	private static final String TABLE_CREATE = 
 			"CREATE TABLE " + TABLE_USER + " (" +

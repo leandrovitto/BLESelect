@@ -36,10 +36,10 @@ public class List_adapter extends ArrayAdapter<user> {
 		TextView age = (TextView) view.findViewById(R.id.Age);
 		TextView email = (TextView) view.findViewById(R.id.email);
 		TextView phone = (TextView) view.findViewById(R.id.Phone);
-		name.setText("User name :" + temp.getName());
-		age.setText("Age : "+temp.getAge());
-		email.setText("Email : "+temp.getEmail());
-		phone.setText("Phone : "+temp.getPhone());
+		name.setText("User name :" + temp.getDate_connection());
+		age.setText("Age : "+temp.getDate_disconnection());
+		email.setText("Email : "+temp.getRssi_conn());
+		phone.setText("Phone : "+temp.getRssi_discon());
 		return view;
 	}
 }

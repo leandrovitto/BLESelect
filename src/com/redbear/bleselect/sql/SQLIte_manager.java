@@ -37,10 +37,10 @@ public class SQLIte_manager {
 
 	public void create(user us) 
 	{	ContentValues info = new ContentValues();
-		info.put(SQLite_helper.COLUMN_NAME, us.getName());
-		info.put(SQLite_helper.COLUMN_AGE, us.getAge());
-		info.put(SQLite_helper.COLUMN_PHONE, us.getPhone());
-		info.put(SQLite_helper.COLUMN_EMAIL, us.getEmail());
+		info.put(SQLite_helper.COLUMN_NAME, us.getDate_connection());
+		info.put(SQLite_helper.COLUMN_EMAIL, us.getDate_disconnection());
+		info.put(SQLite_helper.COLUMN_PHONE, us.getRssi_conn());
+		info.put(SQLite_helper.COLUMN_AGE, us.getRssi_discon());
 		dbdata.insert(SQLite_helper.TABLE_USER, null, info);
 	  	}
 
@@ -91,27 +91,31 @@ public class SQLIte_manager {
 			while (cur.moveToNext()) {
 				user temp = new user();
 
-				temp.setName(cur.getString(cur
+				temp.setDate_connection(cur.getString(cur
 						.getColumnIndex(SQLite_helper.COLUMN_NAME)));
 
-				temp.setAge(cur.getString(cur
-						.getColumnIndex(SQLite_helper.COLUMN_AGE)));
-
-				temp.setEmail(cur.getString(cur
+				temp.setDate_disconnection(cur.getString(cur
 						.getColumnIndex(SQLite_helper.COLUMN_EMAIL)));
 
-				temp.setPhone(cur.getString(cur
+				temp.setRssi_conn(cur.getString(cur
+						.getColumnIndex(SQLite_helper.COLUMN_AGE)));
+
+				temp.setRssi_discon(cur.getString(cur
 						.getColumnIndex(SQLite_helper.COLUMN_PHONE)));
 				users.add(temp);
 			}
 
 		}
 	}
+	public void deleteAll() {
+		dbdata.delete(SQLite_helper.TABLE_USER, null, null);
+
+	}
 
 	public void delete(user us) {
 		dbhelper.onOpen(dbdata);
 		dbdata.delete(SQLite_helper.TABLE_USER, SQLite_helper.COLUMN_NAME + "="
-				+ us.getName(), null);
+				+ us.getDate_connection(), null);
 		dbhelper.close();
 	}
 }

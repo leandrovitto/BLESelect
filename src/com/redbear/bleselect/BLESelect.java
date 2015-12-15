@@ -137,15 +137,7 @@ public class BLESelect extends Activity {
 				uuidTv.setText("AVG RSSI...");
 				scanAllBtn.setText("Disconnect");
 
-				//SQL TEST
-				/*manager=new SQLIte_manager(BLESelect.this);
-				manager.open_DB();
-				//manager.deleteAll();
-				connection conn = new connection();
-				conn.setData_ora_connected(date);
-				conn.setRssi_avg_at_connected("-20");
-				manager.create(conn);*/
-				Toast.makeText(BLESelect.this, "Submitted", Toast.LENGTH_LONG).show();
+
 				//*************************
 
 				startReadRssi();
@@ -298,6 +290,18 @@ public class BLESelect extends Activity {
 		data_ora=(TextView)findViewById(R.id.textDataOra);
 
 
+//SQL TEST
+				manager=new SQLIte_manager(BLESelect.this);
+				manager.open_DB();
+				manager.deleteAll();
+			user u=new user();
+		u.setDate_connection("ddd");
+		u.setDate_disconnection("12");
+		u.setRssi_conn("test@test.it");
+		u.setRssi_discon("32");
+
+				manager.create(u);
+		Toast.makeText(BLESelect.this, "Submitted", Toast.LENGTH_LONG).show();
 
 		date = (DateFormat.format("dd-MM-yyyy HH:mm:ss", new java.util.Date()).toString());
 		data_ora.setText(date);

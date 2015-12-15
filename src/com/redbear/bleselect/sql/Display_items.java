@@ -31,6 +31,8 @@ public class Display_items extends Activity {
 		users = new ArrayList<user>();
 		users = manager.getall();
 		setlist();
+
+		/*
 		ls.setOnItemLongClickListener(new OnItemLongClickListener() {
 
 			@Override
@@ -46,7 +48,7 @@ public class Display_items extends Activity {
 				return true;
 			}
 		});
-
+*/
 	}
 
 	private void setlist() {
