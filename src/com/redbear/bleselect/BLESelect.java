@@ -2,7 +2,6 @@ package com.redbear.bleselect;
 
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -10,20 +9,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Array;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.lang.Thread;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
-import java.util.Vector;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -44,28 +36,21 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.Gravity;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.ExpandableListView;
-import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.redbear.bleselect.sql.Display_items;
 import com.redbear.bleselect.sql.SQLIte_manager;
 import com.redbear.bleselect.sql.SQLite_helper;
-import com.redbear.bleselect.sql.user;
-import com.redbear.bleselect.util.NumberConversion;
-
-import java.lang.Byte;
-
+import com.redbear.bleselect.sql.connection;
 
 
 public class BLESelect extends Activity {
@@ -94,6 +79,7 @@ public class BLESelect extends Activity {
 	TextView uuidTv = null;
 	TextView lastUuid = null;
 	TextView parametro1 = null;
+	TextView data_ora = null;
 	int valori_rssi;
 	int k_conta_rssi=1;
 	private static final int REQUEST_ENABLE_BT = 1;
@@ -111,6 +97,9 @@ public class BLESelect extends Activity {
 	String fname = "flash.txt";
 	SQLIte_manager manager;
 	SQLite_helper hlep;
+	String date;
+	private Timer timer;
+	private TimerTask timerTask;
 
 	private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -147,6 +136,17 @@ public class BLESelect extends Activity {
 				lastDeviceBtn.setVisibility(View.GONE);
 				uuidTv.setText("AVG RSSI...");
 				scanAllBtn.setText("Disconnect");
+
+				//SQL TEST
+				manager=new SQLIte_manager(BLESelect.this);
+				manager.open_DB();
+				//manager.deleteAll();
+				connection conn = new connection();
+				conn.setData_ora_connected(date);
+				conn.setRssi_avg_at_connected("-20");
+				manager.create(conn);
+				Toast.makeText(BLESelect.this, "Submitted", Toast.LENGTH_LONG).show();
+				//*************************
 
 				startReadRssi();
 			} else if (RBLService.ACTION_GATT_DISCONNECTED.equals(action)) {
@@ -273,6 +273,18 @@ public class BLESelect extends Activity {
 		}.start();
 	}
 
+	Handler handler=new Handler();
+
+	final Runnable updateTask=new Runnable() {
+		@Override
+		public void run() {
+			date = (DateFormat.format("dd-MM-yyyy HH:mm:ss", new java.util.Date()).toString());
+			data_ora.setText(date);
+			handler.postDelayed(this,1000);
+		}
+	};
+
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -283,16 +295,14 @@ public class BLESelect extends Activity {
 		uuidTv = (TextView) findViewById(R.id.uuid);
 		lastUuid = (TextView) findViewById(R.id.lastDevice);
 		parametro1 = (TextView) findViewById(R.id.param1);
-        //SQL TEST
-		manager=new SQLIte_manager(this);
-		manager.open_DB();
-		user user = new user();
-		user.setAge("25");
-		user.setEmail("amil");
-		user.setName("test");
-		user.setPhone("dfdfdfdf");
-		manager.create(user);
-		Toast.makeText(this, "Submitted", Toast.LENGTH_LONG).show();
+		data_ora=(TextView)findViewById(R.id.textDataOra);
+
+
+
+		date = (DateFormat.format("dd-MM-yyyy HH:mm:ss", new java.util.Date()).toString());
+		data_ora.setText(date);
+
+		handler.postDelayed(updateTask, 1000);
 		//********************
 
 		String connDeviceInfo = readConnDevice();
@@ -422,13 +432,15 @@ public class BLESelect extends Activity {
 		super.onResume();
 
 		if (!mBluetoothAdapter.isEnabled()) {
-			Intent enableBtIntent = new Intent(
-					BluetoothAdapter.ACTION_REQUEST_ENABLE);
+			Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
 			startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
 		}
 
 		registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+
 	}
+
+
 
 	private static IntentFilter makeGattUpdateIntentFilter() {
 		final IntentFilter intentFilter = new IntentFilter();
@@ -442,41 +454,7 @@ public class BLESelect extends Activity {
 		return intentFilter;
 	}
 
-	private void scanLeDevice() {
-		new Thread() {
 
-			@Override
-			public void run() {
-				mBluetoothAdapter.startLeScan(mLeScanCallback);
-
-				try {
-					Thread.sleep(SCAN_PERIOD);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-
-				mBluetoothAdapter.stopLeScan(mLeScanCallback);
-			}
-		}.start();
-	}
-
-	private BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
-
-		@Override
-		public void onLeScan(final BluetoothDevice device, final int rssi,
-							 byte[] scanRecord) {
-
-			runOnUiThread(new Runnable() {
-				@Override
-				public void run() {
-					if (device != null) {
-						if (mDevice.indexOf(device) == -1)
-							mDevice.add(device);
-					}
-				}
-			});
-		}
-	};
 
 	@Override
 	protected void onStop() {
@@ -514,6 +492,42 @@ public class BLESelect extends Activity {
 		super.onActivityResult(requestCode, resultCode, data);
 	}
 
+
+	private void scanLeDevice() {
+		new Thread() {
+
+			@Override
+			public void run() {
+				mBluetoothAdapter.startLeScan(mLeScanCallback);
+
+				try {
+					Thread.sleep(SCAN_PERIOD);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+
+				mBluetoothAdapter.stopLeScan(mLeScanCallback);
+			}
+		}.start();
+	}
+
+	private BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
+
+		@Override
+		public void onLeScan(final BluetoothDevice device, final int rssi,
+							 byte[] scanRecord) {
+
+			runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					if (device != null) {
+						if (mDevice.indexOf(device) == -1)
+							mDevice.add(device);
+					}
+				}
+			});
+		}
+	};
 
 	// Demonstrates how to iterate through the supported GATT Services/Characteristics.
 	// In this sample, we populate the data structure that is bound to the ExpandableListView
