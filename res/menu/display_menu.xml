@@ -5,12 +5,12 @@
         android:id="@+id/byname"
         android:orderInCategory="100"
         android:showAsAction="always"
-        android:title="sort by name"/>
+        android:title="sort by ID"/>
     <item
         android:id="@+id/byage"
         android:orderInCategory="100"
         android:showAsAction="always"
-        android:title="sort by age"/>
+        android:title="sort by DATA Disconnessione"/>
 
 </menu>
 

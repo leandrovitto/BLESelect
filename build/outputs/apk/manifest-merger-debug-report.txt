@@ -53,7 +53,7 @@ ADDED from AndroidManifest.xml:20:5
 		ADDED from AndroidManifest.xml:22:9
 	android:theme
 		ADDED from AndroidManifest.xml:24:9
-activity#com.redbear.bleselect.BLESelect
+activity#com.BLESelect
 ADDED from AndroidManifest.xml:25:9
 	android:label
 		ADDED from AndroidManifest.xml:27:13
@@ -71,7 +71,7 @@ category#android.intent.category.LAUNCHER
 ADDED from AndroidManifest.xml:32:17
 	android:name
 		ADDED from AndroidManifest.xml:32:27
-activity#com.redbear.bleselect.sql.Display_items
+activity#com.sql.Display_items
 ADDED from AndroidManifest.xml:35:9
 	android:label
 		ADDED from AndroidManifest.xml:37:13
@@ -83,11 +83,11 @@ category#android.intent.category.DEFAULT
 ADDED from AndroidManifest.xml:40:17
 	android:name
 		ADDED from AndroidManifest.xml:40:27
-activity#com.redbear.bleselect.Device
+activity#com.Device
 ADDED from AndroidManifest.xml:43:9
 	android:name
 		ADDED from AndroidManifest.xml:43:19
-service#com.redbear.bleselect.RBLService
+service#com.RBLService
 ADDED from AndroidManifest.xml:45:9
 	android:enabled
 		ADDED from AndroidManifest.xml:47:13

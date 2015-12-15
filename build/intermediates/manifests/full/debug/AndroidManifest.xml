@@ -24,7 +24,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.redbear.bleselect.BLESelect"
+            android:name="com.BLESelect"
             android:label="@string/app_name"
             android:theme="@style/title" >
             <intent-filter>
@@ -34,16 +34,16 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.redbear.bleselect.sql.Display_items"
+            android:name="com.sql.Display_items"
             android:label="@string/app_name" >
             <intent-filter>
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name="com.redbear.bleselect.Device" />
+        <activity android:name="com.Device" />
 
         <service
-            android:name="com.redbear.bleselect.RBLService"
+            android:name="com.RBLService"
             android:enabled="true" />
     </application>
 
