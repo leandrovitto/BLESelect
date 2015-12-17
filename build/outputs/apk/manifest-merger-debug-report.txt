@@ -53,7 +53,7 @@ ADDED from AndroidManifest.xml:20:5
 		ADDED from AndroidManifest.xml:22:9
 	android:theme
 		ADDED from AndroidManifest.xml:24:9
-activity#com.BLESelect
+activity#com.ble.BLESelect
 ADDED from AndroidManifest.xml:25:9
 	android:label
 		ADDED from AndroidManifest.xml:27:13
@@ -83,11 +83,11 @@ category#android.intent.category.DEFAULT
 ADDED from AndroidManifest.xml:40:17
 	android:name
 		ADDED from AndroidManifest.xml:40:27
-activity#com.Device
+activity#com.ble.Device
 ADDED from AndroidManifest.xml:43:9
 	android:name
 		ADDED from AndroidManifest.xml:43:19
-service#com.RBLService
+service#com.ble.BLService
 ADDED from AndroidManifest.xml:45:9
 	android:enabled
 		ADDED from AndroidManifest.xml:47:13

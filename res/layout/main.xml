@@ -76,15 +76,26 @@
             android:layout_height="match_parent">
 
             <TextView
+                android:id="@+id/textStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Status:"
+                android:textColor="#000"
+                android:textSize="23dp"
+                android:layout_centerVertical="true"
+                android:textStyle="bold"
+                android:layout_marginTop="70dp"
+                 />
+
+            <TextView
                 android:id="@+id/uuid"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/no_connected"
                 android:textColor="#000"
                 android:textSize="30dp"
                 android:layout_centerVertical="true"
                 android:textStyle="bold"
-                android:layout_marginTop="150dp" />
+                android:layout_marginTop="50dp" />
 
             <TextView
                 android:id="@+id/param1"

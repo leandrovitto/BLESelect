@@ -23,7 +23,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.BLESelect"
+            android:name="com.ble.BLESelect"
             android:label="@string/app_name"
             android:theme="@style/title" >
             <intent-filter>
@@ -40,10 +40,10 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name="com.Device" />
+        <activity android:name="com.ble.Device" />
 
         <service
-            android:name="com.RBLService"
+            android:name="com.ble.BLService"
             android:enabled="true" />
     </application>
 

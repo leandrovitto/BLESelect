@@ -1,4 +1,4 @@
-package com;
+package com.ble;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
@@ -31,6 +33,10 @@ public class Device extends Activity implements OnItemClickListener {
 	public final static String EXTRA_DEVICE_ADDRESS = "EXTRA_DEVICE_ADDRESS";
 	public final static String EXTRA_DEVICE_NAME = "EXTRA_DEVICE_NAME";
 
+
+	private BluetoothAdapter mBluetoothAdapter;
+	public static List<BluetoothDevice> mDevice = new ArrayList<BluetoothDevice>();
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -38,6 +44,17 @@ public class Device extends Activity implements OnItemClickListener {
 
 		getActionBar().setDisplayHomeAsUpEnabled(true);
 		setTitle("Device");
+
+		/*
+
+		try {
+			Thread.sleep(BLESelect.SCAN_PERIOD);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		*/
+
 
 		listView = (ListView) findViewById(R.id.listView);
 
@@ -78,4 +95,39 @@ public class Device extends Activity implements OnItemClickListener {
 		setResult(RESULT_CODE, intent);
 		finish();
 	}
+
+	void scanLeDevice() {
+		new Thread() {
+
+			@Override
+			public void run() {
+				mBluetoothAdapter.startLeScan(mLeScanCallback);
+
+				try {
+					Thread.sleep(BLESelect.SCAN_PERIOD);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+
+				mBluetoothAdapter.stopLeScan(mLeScanCallback);
+			}
+		}.start();
+	}
+	private BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
+
+		@Override
+		public void onLeScan(final BluetoothDevice device, final int rssi,
+							 byte[] scanRecord) {
+
+			runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					if (device != null) {
+						if (mDevice.indexOf(device) == -1)
+							mDevice.add(device);
+					}
+				}
+			});
+		}
+	};
 }

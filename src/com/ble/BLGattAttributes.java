@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com;
+package com.ble;
 
 import java.util.HashMap;
 
@@ -22,7 +22,7 @@ import java.util.HashMap;
  * This class includes a small subset of standard GATT attributes for
  * demonstration purposes.
  */
-public class RBLGattAttributes {
+public class BLGattAttributes {
 	private static HashMap<String, String> attributes = new HashMap<String, String>();
 	public static String STM32_ACCELEROMETER_PARAMETER = "0000a001-0000-1000-8000-00805f9b34fb";
 	public static String SERVICE_STM32 = "0000a000-0000-1000-8000-00805f9b34fb";

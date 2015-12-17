@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com;
+package com.ble;
 
 import java.util.List;
 import java.util.UUID;
@@ -33,19 +33,29 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
+import android.text.format.DateFormat;
 import android.util.Log;
+import android.widget.Toast;
+
+import com.sql.SQLIte_manager;
+import com.sql.SQLite_helper;
+import com.sql.user;
 
 /**
  * Service for managing connection and data communication with a GATT server
  * hosted on a given Bluetooth LE device.
  */
-public class RBLService extends Service {
-	private final static String TAG = RBLService.class.getSimpleName();
+public class BLService extends Service {
+	private final static String TAG = BLService.class.getSimpleName();
 
 	private BluetoothManager mBluetoothManager;
 	private BluetoothAdapter mBluetoothAdapter;
 	private String mBluetoothDeviceAddress;
 	private BluetoothGatt mBluetoothGatt;
+	private BLESelect bleSelect;
+	SQLIte_manager manager;
+	SQLite_helper hlep;
+	String date;
 
 	public final static String ACTION_GATT_CONNECTED = "ACTION_GATT_CONNECTED";
 	public final static String ACTION_GATT_DISCONNECTED = "ACTION_GATT_DISCONNECTED";
@@ -53,7 +63,8 @@ public class RBLService extends Service {
 	public final static String ACTION_GATT_RSSI = "ACTION_GATT_RSSI";
 	public final static String ACTION_DATA_AVAILABLE = "ACTION_DATA_AVAILABLE";
 	public final static String EXTRA_DATA = "EXTRA_DATA";
-	public final static String EXTRA_RSSI="EXTRA_RSSI";
+	public String BLE_STATUS_CONNECTION_STRING="";
+	public String RSSI="EXTRA_RSSI";
 	/*public final static UUID UUID_BLE_SHIELD_TX = UUID
 			.fromString(RBLGattAttributes.BLE_SHIELD_TX);
 	public final static UUID UUID_BLE_SHIELD_RX = UUID
@@ -63,7 +74,7 @@ public class RBLService extends Service {
 	public final static UUID UUID_HEART_RATE_MEASUREMENT =
 			UUID.fromString(RBLGattAttributes.HEART_RATE_MEASUREMENT);*/
 	public final static UUID UUID_STM32_ACCELEROMETER_PARAMETER =
-			UUID.fromString(RBLGattAttributes.STM32_ACCELEROMETER_PARAMETER);
+			UUID.fromString(BLGattAttributes.STM32_ACCELEROMETER_PARAMETER);
 
 	private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
 		@Override
@@ -75,18 +86,21 @@ public class RBLService extends Service {
 				intentAction = ACTION_GATT_CONNECTED;
 				broadcastUpdate(intentAction);
 				Log.i(TAG, "Connected to GATT server.");
+				BLE_STATUS_CONNECTION_STRING="Connected to GATT server.";
 				// Attempts to discover services after successful connection.
 				Log.i(TAG, "Attempting to start service discovery:"
 						+ mBluetoothGatt.discoverServices());
 			} else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
 				intentAction = ACTION_GATT_DISCONNECTED;
 				Log.i(TAG, "Disconnected from GATT server.");
+				BLE_STATUS_CONNECTION_STRING="Disconnected from GATT server.";
 				broadcastUpdate(intentAction);
 			}
 		}
 
 		public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
 			if (status == BluetoothGatt.GATT_SUCCESS) {
+				RSSI=String.valueOf(rssi);
 				broadcastUpdate(ACTION_GATT_RSSI, rssi);
 			} else {
 				Log.w(TAG, "onReadRemoteRssi received: " + status);
@@ -157,7 +171,7 @@ public class RBLService extends Service {
         } else {*/
             // For all other profiles, writes the data formatted in HEX.
             final byte[] data = characteristic.getValue();
-		Log.e(TAG, "----->>BYTE>>>>>"+intent.getStringExtra(RBLService.EXTRA_DATA));
+		Log.e(TAG, "----->>BYTE>>>>>"+intent.getStringExtra(BLService.EXTRA_DATA));
             if (data != null && data.length > 0) {
                 final StringBuilder stringBuilder = new StringBuilder(data.length);
                 for(byte byteChar : data)
@@ -170,8 +184,8 @@ public class RBLService extends Service {
 	}
 
 	public class LocalBinder extends Binder {
-		RBLService getService() {
-			return RBLService.this;
+		BLService getService() {
+			return BLService.this;
 		}
 	}
 
@@ -234,6 +248,7 @@ public class RBLService extends Service {
 		if (mBluetoothAdapter == null || address == null) {
 			Log.w(TAG,
 					"BluetoothAdapter not initialized or unspecified address.");
+			BLE_STATUS_CONNECTION_STRING="BluetoothAdapter not initialized or unspecified address.";
 			return false;
 		}
 
@@ -243,7 +258,9 @@ public class RBLService extends Service {
 				&& mBluetoothGatt != null) {
 			Log.d(TAG,
 					"Trying to use an existing mBluetoothGatt for connection.");
+			BLE_STATUS_CONNECTION_STRING="Trying to use an existing mBluetoothGatt for connection.";
 			if (mBluetoothGatt.connect()) {
+
 				return true;
 			} else {
 				return false;
@@ -254,6 +271,7 @@ public class RBLService extends Service {
 				.getRemoteDevice(address);
 		if (device == null) {
 			Log.w(TAG, "Device not found.  Unable to connect.");
+			BLE_STATUS_CONNECTION_STRING="Device not found.  Unable to connect.";
 			return false;
 		}
 		// We want to directly connect to the device, so we are setting the
@@ -261,6 +279,7 @@ public class RBLService extends Service {
 		// parameter to false.
 		mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
 		Log.d(TAG, "Trying to create a new connection.");
+		BLE_STATUS_CONNECTION_STRING="Trying to create a new connection.";
 		mBluetoothDeviceAddress = address;
 
 		return true;
@@ -278,6 +297,7 @@ public class RBLService extends Service {
 			return;
 		}
 		mBluetoothGatt.disconnect();
+		BLE_STATUS_CONNECTION_STRING="Disconnect...";
 	}
 
 	/**
@@ -303,7 +323,7 @@ public class RBLService extends Service {
 	 */
 	public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
 		if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-			Log.w(TAG, "BluetoothAdapter not initialized");
+			Log.w(TAG, "BluetoothAdapter not initialized Characteristic");
 			return;
 		}
 
@@ -349,7 +369,7 @@ public class RBLService extends Service {
 
 		if (UUID_STM32_ACCELEROMETER_PARAMETER.equals(characteristic.getUuid())) {
 			BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
-					UUID.fromString(RBLGattAttributes.STM32_ACCELEROMETER_PARAMETER));
+					UUID.fromString(BLGattAttributes.STM32_ACCELEROMETER_PARAMETER));
 			descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
 			mBluetoothGatt.writeDescriptor(descriptor);
 		}
