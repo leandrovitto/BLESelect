@@ -20,8 +20,8 @@ public class SQLIte_manager {
 			SQLite_helper.COLUMN_DATE_CONNECTION,
 			SQLite_helper.COLUMN_RSSI_DISCONN,
 			SQLite_helper.COLUMN_DATE_DISCONNECTION,
-			SQLite_helper.COLUMN_RSSI_CONN,
-			SQLite_helper.COLUMN_DEV
+			SQLite_helper.COLUMN_RSSI_CONN
+			,SQLite_helper.COLUMN_DEV
 
 	};
 
@@ -110,8 +110,8 @@ public class SQLIte_manager {
 				temp.setRssi_discon(cur.getString(cur
 						.getColumnIndex(SQLite_helper.COLUMN_RSSI_DISCONN)));
 
-				temp.setDev(cur.getString(cur
-						.getColumnIndex(SQLite_helper.COLUMN_DEV)));
+				temp.setDev(cur.getString(cur.getColumnIndex(SQLite_helper.COLUMN_DEV)));
+
 				users.add(temp);
 			}
 
@@ -120,6 +120,19 @@ public class SQLIte_manager {
 	public void deleteAll() {
 		dbdata.delete(SQLite_helper.TABLE_USER, null, null);
 
+	}
+
+	public void executeSql(String query) {
+		dbhelper.onOpen(dbdata);
+		dbdata.execSQL(query);
+		dbhelper.close();
+
+	}
+
+	public void delete_table_data() {
+		dbhelper.onOpen(dbdata);
+		dbdata.execSQL("DROP TABLE IF EXISTS " + SQLite_helper.TABLE_USER);
+		dbhelper.close();
 	}
 
 	public void delete(user us) {
@@ -137,6 +150,18 @@ public class SQLIte_manager {
 		int ID = cur.getInt(0);
 		cur.close();
 		return ID;
+	}
+
+	public String get_Device(int id){
+		final String MY_QUERY = "SELECT * FROM "+SQLite_helper.TABLE_USER+" WHERE id=" + id;
+		Cursor cur = dbdata.rawQuery(MY_QUERY, null);
+		if (cur==null){
+			return null;
+		}else{
+			cur.moveToFirst();
+			return cur.getString(cur.getColumnIndex(SQLite_helper.COLUMN_DEV));
+		}
+
 	}
 
 	public void update_RssiConnect(int id,String v){

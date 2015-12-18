@@ -2,15 +2,21 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
 
     <item
-        android:id="@+id/byname"
+        android:id="@+id/back"
         android:orderInCategory="100"
         android:showAsAction="always"
-        android:title="sort by ID"/>
+        android:title="@string/back"/>
+
     <item
-        android:id="@+id/byage"
+        android:id="@+id/by_id"
         android:orderInCategory="100"
         android:showAsAction="always"
-        android:title="sort by DATA Disconnessione"/>
+        android:title="@string/sortbyid"/>
+    <item
+        android:id="@+id/delete_all"
+        android:orderInCategory="100"
+        android:showAsAction="always"
+        android:title="@string/delall"/>
 
 </menu>
 

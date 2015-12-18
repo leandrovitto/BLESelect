@@ -2,20 +2,24 @@ package com.sql;
 
 
 public class user {
- 
+
+	String id;
 	String date_connection;
-	String date_disconnection;
 	String rssi_conn;
+	String date_disconnection;
+	String rssi_discon;
+	String dev;
+
 
 	public String getDev() {
 		return dev;
 	}
 
-	public void setDev(String device) {
+	public void setDev(String dev) {
 		this.dev = dev;
 	}
 
-	String dev;
+
 
 	public String getId() {
 		return id;
@@ -25,7 +29,7 @@ public class user {
 		this.id = id;
 	}
 
-	String id;
+
 
 	public String getRssi_discon() {
 		return rssi_discon;
@@ -59,7 +63,7 @@ public class user {
 		this.rssi_conn = rssi_conn;
 	}
 
-	String rssi_discon;
+
 
 
 	 

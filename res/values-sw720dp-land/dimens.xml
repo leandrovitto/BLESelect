@@ -1,9 +1,9 @@
 <resources>
 
-    <!--
-         Customize dimensions originally defined in res/values/dimens.xml (such as
-         screen margins) for sw720dp devices (e.g. 10" tablets) in landscape here.
-    -->
-    <dimen name="activity_horizontal_margin">128dp</dimen>
+    <!-- Semantic definitions -->
+
+    <dimen name="horizontal_page_margin">@dimen/margin_huge</dimen>
+    <dimen name="vertical_page_margin">@dimen/margin_medium</dimen>
 
 </resources>
+

@@ -32,6 +32,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
@@ -43,11 +47,13 @@ import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.ExpandableListView;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -66,70 +72,67 @@ public class BLESelect extends Activity {
 	private BluetoothAdapter mBluetoothAdapter;
 	private BluetoothGatt mBluetoothGatt;
 	private BluetoothGattCharacteristic mNotifyCharacteristic;
-	//private Map<UUID, BluetoothGattCharacteristic> map = new HashMap<UUID, BluetoothGattCharacteristic>();
 	public static List<BluetoothDevice> mDevice = new ArrayList<BluetoothDevice>();
-	;
-
-	private BluetoothGattCharacteristic mWriteCharacteristic, mReadCharacteristic;
-	private ExpandableListView mGattServicesList;
-
-	private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics =
-			new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
+	private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics = new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
 
 	private final String LIST_NAME = "NAME";
 	private final String LIST_UUID = "UUID";
-	String ConnessioneBLEState_message;
 
-	Button lastDeviceBtn = null;
-	Button scanAllBtn = null;
-	Button logBtn = null;
+	Menu menu_bleselect;
+	MenuItem menu_ble_item;
 	TextView uuidTv = null;
 	TextView lastUuid = null;
 	TextView parametro1 = null;
 	TextView data_ora = null;
 	TextView textStatus= null;
+	//RSSI
 	int valori_rssi;
 	String rssi_avg;
 	int k_conta_rssi=1;
+
 	private static final int REQUEST_ENABLE_BT = 1;
 	static final long SCAN_PERIOD = 2000;
 	public static final int REQUEST_CODE = 30;
-	private TextView mConnectionState;
-	private TextView mDataField;
 	private String mDeviceAddress;
 	private String mDeviceName;
+
 	private boolean flag = true;
 	private boolean first_run=true;
-	private boolean connState = false;
-	private static final int MSG_HUMIDITY = 101;
+	boolean mScanning = false;
 	private boolean ConnessioneBLEState=false;
-	String path = Environment.getExternalStorageDirectory().getAbsolutePath();
-	String fname = "flash.txt";
+
+	//String path = Environment.getExternalStorageDirectory().getAbsolutePath();
+	//String fname = "flash.txt";
 	SQLIte_manager manager;
-	SQLite_helper hlep;
 	String date;
 	private Timer timer;
 	private TimerTask timerTask;
 
 	private final ServiceConnection mServiceConnection = new ServiceConnection() {
-
 		@Override
 		public void onServiceConnected(ComponentName componentName,IBinder service) {
 			mBluetoothLeService = ((BLService.LocalBinder) service).getService();
-
 			if (!mBluetoothLeService.initialize()) {
 				Log.e(TAG, "Unable to initialize Bluetooth");
 				finish();
 			}
 		}
-
 		@Override
 		public void onServiceDisconnected(ComponentName componentName) {
 			Log.e(TAG, "onServiceDisconnected");
-			//mBluetoothLeService = null;
-
 		}
 	};
+
+	private void empty_View_disconnect(){
+		uuidTv.setText("");
+		parametro1.setText("");
+		first_run=true;//per il calcolo dell'rssi
+		flag = false;//connessione spenta
+	}
+
+	private void toast_notify(String data){
+		Toast.makeText(getApplicationContext(), data,Toast.LENGTH_LONG).show();
+	}
 
 	private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
 		@Override
@@ -138,57 +141,39 @@ public class BLESelect extends Activity {
 
 			if (BLService.ACTION_GATT_CONNECTED.equals(action)) {
 				flag = true;
-				connState = true;
-				writeToFile(mDeviceName + " ( " + mDeviceAddress + " )");
 				lastUuid.setText(mDeviceName + " ( " + mDeviceAddress + " )");
-				lastDeviceBtn.setVisibility(View.GONE);
-				logBtn.setVisibility(View.GONE);
+						//lastDeviceBtn.setVisibility(View.GONE);
 				uuidTv.setText("AVG RSSI...");
-				scanAllBtn.setText("Disconnect");
+						//scanAllBtn.setText("Disconnect");
 				//*************************
-				//SQL INSERT
+				//-----------------------------------------SQL INSERT
 				manager=new SQLIte_manager(BLESelect.this);
 				manager.open_DB();
-				//manager.deleteAll();
 				user u=new user();
-				date = (DateFormat.format("dd-MM-yyyy HH:mm:ss", new java.util.Date()).toString());
 				u.setDate_connection(date);
 				u.setDev(mDeviceName + " ( " + mDeviceAddress + " )");
 				manager.create(u);
 				generateTone(300, 250).play();
-				Toast.makeText(getApplicationContext(), "Saved:Connected @ "+date,
-						Toast.LENGTH_LONG).show();
+				//-----------------------------------------
+				toast_notify("Saved:Connected @ " + date);
 				startReadRssi();
 			} else if (BLService.ACTION_GATT_DISCONNECTED.equals(action)) {
-				flag = false;
-				connState = false;
-				first_run=true;
-
-				uuidTv.setText("");
-				parametro1.setText("");
+				empty_View_disconnect();
 				manager=new SQLIte_manager(BLESelect.this);
 				manager.open_DB();
 				manager.update_DataDisconnect(manager.getHighestID(), date);
 				manager.update_RssiDisconnect(manager.getHighestID(), rssi_avg);
 				generateTone(360, 250).play();
-				Toast.makeText(getApplicationContext(), "Saved:Disconnected @ " + date,
-						Toast.LENGTH_LONG).show();
-				//scanLeDevice();
-				//gattServiceIntent = new Intent(BLESelect.this, BLService.class);
-				//bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
-				//ConnessioneBLEState=mBluetoothLeService.connect(mDeviceAddress);
-				//registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+				toast_notify("Saved:Disconnected @ " + date);
 			} else if (BLService.ACTION_GATT_RSSI.equals(action)) {
-				//EFFETTUO UNA MEDIA DI 10 VALORI e LI VISUALIZZO
+				//EFFETTUO UNA MEDIA DI 20 VALORI e LI VISUALIZZO
 				//RSSI Ha oscillazioni molto forti causa onde radio
-
-					valori_rssi+=Integer.parseInt(
-							intent.getStringExtra(BLService.EXTRA_RSSI));
+					valori_rssi+=Integer.parseInt(intent.getStringExtra(BLService.EXTRA_RSSI));
 					k_conta_rssi++;
-					if(k_conta_rssi==20){
-						//Log.i(TAG, "|||" + valori_rssi / 20);
+
+				if(k_conta_rssi==20){
 						rssi_avg=String.valueOf(valori_rssi / 20);
-						displayData(rssi_avg);
+						displayData(rssi_avg);//visualizzo RSSI
 						if(first_run){
 							first_run=false;
 							manager=new SQLIte_manager(BLESelect.this);
@@ -214,43 +199,21 @@ public class BLESelect extends Activity {
 	};
 
 
-	private void writeToFile(String flash) {
-		File sdfile = new File(path, fname);
-		try {
-			FileOutputStream out = new FileOutputStream(sdfile);
-			out.write(flash.getBytes());
-			out.flush();
-			out.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 	@SuppressWarnings("resource")
-	private String readConnDevice() {
-		String filepath = path + "/" + fname;
-		String line = null;
-
-		File file = new File(filepath);
-		try {
-			FileInputStream f = new FileInputStream(file);
-			InputStreamReader isr = new InputStreamReader(f, "GB2312");
-			BufferedReader dr = new BufferedReader(isr);
-			line = dr.readLine();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	private boolean readConnDevice() {
+		manager=new SQLIte_manager(BLESelect.this);
+		manager.open_DB();
+		String connDeviceInfo=null;
+		lastUuid.setText("");
+		if(manager.getHighestID()>0){
+			connDeviceInfo=manager.get_Device(manager.getHighestID());
+			mDeviceName = connDeviceInfo.split("\\( ")[0].trim();
+			String str = connDeviceInfo.split("\\( ")[1];
+			mDeviceAddress = str.substring(0, str.length() - 2);
+			lastUuid.setText(connDeviceInfo);
+			return true;
 		}
-
-		return line;
+		return false;
 	}
 
 
@@ -308,172 +271,20 @@ public class BLESelect extends Activity {
 	}
 
 
-	Handler handler=new Handler();
-	final Runnable updateTask=new Runnable() {
-		@Override
-		public void run() {
-			date = (DateFormat.format("dd-MM-yyyy HH:mm:ss", new java.util.Date()).toString());
-			data_ora.setText(date);
-			textStatus.setText(mBluetoothLeService.BLE_STATUS_CONNECTION_STRING);
-			handler.postDelayed(this,1000);
-		}
-	};
 
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		//requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
-		setContentView(R.layout.main);
-		//getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.title);
-
-		uuidTv = (TextView) findViewById(R.id.uuid);
-		lastUuid = (TextView) findViewById(R.id.lastDevice);
-		parametro1 = (TextView) findViewById(R.id.param1);
-		data_ora=(TextView)findViewById(R.id.textDataOra);
-		textStatus=(TextView)findViewById(R.id.textStatus);
-
-		date = (DateFormat.format("dd-MM-yyyy HH:mm:ss", new java.util.Date()).toString());
-		data_ora.setText(date);
-
-		handler.postDelayed(updateTask, 1000);
-		//********************
-
-		String connDeviceInfo = readConnDevice();
-		if (connDeviceInfo == null) {
-			lastUuid.setText("--");
-		} else {
-			mDeviceName = connDeviceInfo.split("\\( ")[0].trim();
-			String str = connDeviceInfo.split("\\( ")[1];
-			mDeviceAddress = str.substring(0, str.length() - 2);
-			lastUuid.setText(connDeviceInfo);
-		}
-
-		lastDeviceBtn = (Button) findViewById(R.id.ConnLastDevice);
-
-		lastDeviceBtn.setOnClickListener(new OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
 
 
-				mDevice.clear();
-				String connDeviceInfo = readConnDevice();
-				if (connDeviceInfo == null) {
-					Toast toast = Toast.makeText(BLESelect.this,
-							"No Last connect device!", Toast.LENGTH_SHORT);
-					toast.setGravity(Gravity.CENTER, 0, 0);
-					toast.show();
-
-					return;
-				}
-
-				String str = connDeviceInfo.split("\\( ")[1];
-				final String mDeviceAddress = str.substring(0, str.length() - 2);
-
-				scanLeDevice();
-				ConnessioneBLEState=mBluetoothLeService.connect(mDeviceAddress);
-/*
-				Timer mNewTimer = new Timer();
-				mNewTimer.schedule(new TimerTask() {
-
-					@Override
-					public void run() {
-						for (BluetoothDevice device : mDevice)
-							if ((device.getAddress().equals(mDeviceAddress))) {
-								ConnessioneBLEState=mBluetoothLeService.connect(mDeviceAddress);
-
-								return;
-							}
-
-						runOnUiThread(new Runnable() {
-							@Override
-							public void run() {
-								Toast toast = Toast.makeText(BLESelect.this,
-										"No Last connect device!",
-										Toast.LENGTH_SHORT);
-								toast.setGravity(Gravity.CENTER, 0, 0);
-								toast.show();
-							}
-						});
-
-					}
-				}, SCAN_PERIOD);*/
-
-			}
-		});
-
-		scanAllBtn = (Button) findViewById(R.id.ScanAll);
-		scanAllBtn.setOnClickListener(new OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
-				if (ConnessioneBLEState == false) {
-					scanLeDevice();
-
-					try {
-						Thread.sleep(BLESelect.SCAN_PERIOD);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-
-					Intent intent = new Intent(getApplicationContext(),
-							Device.class);
-					startActivityForResult(intent, REQUEST_CODE);
-				} else {
-					mBluetoothLeService.disconnect();
-					ConnessioneBLEState=false;
-					mBluetoothLeService.close();
-					scanAllBtn.setText("Scan All");
-					parametro1.setText("");
-					uuidTv.setText(R.string.no_connected);
-					lastDeviceBtn.setVisibility(View.VISIBLE);
-					logBtn.setVisibility(View.VISIBLE);
-					manager=new SQLIte_manager(BLESelect.this);
-					manager.open_DB();
-					manager.update_DataDisconnect(manager.getHighestID(), date);
-					manager.update_RssiDisconnect(manager.getHighestID(), rssi_avg);
-					generateTone(330, 250).play();
-
-				}
-			}
-		});
-
-		logBtn = (Button) findViewById(R.id.Log);
-		logBtn.setOnClickListener(new OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
-				Intent i = new Intent(getApplicationContext(),Display_items.class);
-				startActivity(i);
-
-				}
-			});
-
-
-		if (!getPackageManager().hasSystemFeature(
-				PackageManager.FEATURE_BLUETOOTH_LE)) {
-			Toast.makeText(this, "Ble not supported", Toast.LENGTH_SHORT)
-					.show();
-			finish();
-		}
-
-
-		//mBluetoothLeService.initialize();
-
-		final BluetoothManager mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-		mBluetoothAdapter = mBluetoothManager.getAdapter();
-		if (mBluetoothAdapter == null) {
-			Toast.makeText(this, "Ble not supported", Toast.LENGTH_SHORT)
-					.show();
-			finish();
-			return;
-		}
-
-		gattServiceIntent = new Intent(BLESelect.this, BLService.class);
-		bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+	private static IntentFilter makeGattUpdateIntentFilter() {
+		final IntentFilter intentFilter = new IntentFilter();
+		intentFilter.addAction(BLService.ACTION_GATT_CONNECTED);
+		intentFilter.addAction(BLService.ACTION_GATT_DISCONNECTED);
+		intentFilter.addAction(BLService.ACTION_GATT_SERVICES_DISCOVERED);
+		intentFilter.addAction(BLService.ACTION_GATT_RSSI);
+		intentFilter.addAction(BLService.ACTION_DATA_AVAILABLE);
+		return intentFilter;
 	}
+
 
 	@Override
 	protected void onResume() {
@@ -486,33 +297,10 @@ public class BLESelect extends Activity {
 		registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 
 	}
-
-
-
-
-
-
-	private static IntentFilter makeGattUpdateIntentFilter() {
-		final IntentFilter intentFilter = new IntentFilter();
-
-		intentFilter.addAction(BLService.ACTION_GATT_CONNECTED);
-		intentFilter.addAction(BLService.ACTION_GATT_DISCONNECTED);
-		intentFilter.addAction(BLService.ACTION_GATT_SERVICES_DISCOVERED);
-		intentFilter.addAction(BLService.ACTION_GATT_RSSI);
-		intentFilter.addAction(BLService.ACTION_DATA_AVAILABLE);
-
-		return intentFilter;
-	}
-
-
-
 	@Override
 	protected void onStop() {
 		super.onStop();
-
 		//flag = false;
-
-		//
 		// unregisterReceiver(mGattUpdateReceiver);
 	}
 
@@ -540,6 +328,7 @@ public class BLESelect extends Activity {
 			mDeviceAddress = data.getStringExtra(Device.EXTRA_DEVICE_ADDRESS);
 			mDeviceName = data.getStringExtra(Device.EXTRA_DEVICE_NAME);
 			ConnessioneBLEState=mBluetoothLeService.connect(mDeviceAddress);
+			menu_bleselect.findItem(R.id.connect_memory).setTitle("Disconnect");
 
 		}
 
@@ -552,8 +341,9 @@ public class BLESelect extends Activity {
 
 			@Override
 			public void run() {
+
+				mScanning = true;
 				mBluetoothAdapter.startLeScan(mLeScanCallback);
-				//textStatus.setText("Status:scanleDevice");
 				try {
 					Thread.sleep(SCAN_PERIOD);
 				} catch (InterruptedException e) {
@@ -561,12 +351,12 @@ public class BLESelect extends Activity {
 				}
 
 				mBluetoothAdapter.stopLeScan(mLeScanCallback);
+				mScanning = false;
 			}
 		}.start();
 	}
 
 	private BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
-
 		@Override
 		public void onLeScan(final BluetoothDevice device, final int rssi,
 							 byte[] scanRecord) {
@@ -676,16 +466,144 @@ public class BLESelect extends Activity {
 	}
 
 	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		int id = item.getItemId();
+		if (id == R.id.action_log) {
+			Intent i = new Intent(getApplicationContext(),Display_items.class);
+			startActivity(i);
+		}else if(id==R.id.scanning){
+				//scanAllBtn.setActionView(R.layout.actionbar_indeterminate_progress);
+			    menu_bleselect.findItem(R.id.scanning).setActionView(R.layout.actionbar_indeterminate_progress);
+				scanLeDevice();
+			    handler_scanning.postDelayed(updateTask_scanning, 100);
+				/*try {
+
+					Thread.sleep(BLESelect.SCAN_PERIOD);
+					menu_bleselect.findItem(R.id.scanning).setActionView(R.layout.actionbar_indeterminate_progress);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}*/
+
+		}else if(id==R.id.connect_memory){
+			 mDevice.clear();
+			if (ConnessioneBLEState == false) {
+				if (!readConnDevice()) {
+					textStatus.setText("No Memory Device");
+				} else {
+					scanLeDevice();
+					ConnessioneBLEState = mBluetoothLeService.connect(mDeviceAddress);
+					menu_bleselect.findItem(R.id.connect_memory).setTitle("Disconnect");
+				}
+			}else{
+				mBluetoothLeService.disconnect();
+				ConnessioneBLEState=false;
+				mBluetoothLeService.close();
+				parametro1.setText("");
+				uuidTv.setText("");
+				manager=new SQLIte_manager(BLESelect.this);
+				manager.open_DB();
+				manager.update_DataDisconnect(manager.getHighestID(), date);
+				manager.update_RssiDisconnect(manager.getHighestID(), rssi_avg);
+				menu_bleselect.findItem(R.id.connect_memory).setTitle(R.string.connect_Memory);
+				generateTone(330, 250).play();
+
+			}
+		}
+		return super.onOptionsItemSelected(item);
+	}
+
+	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.bleselect, menu);
-		/*if (!mScanning) {
-			//menu.findItem(R.id.menu_stop).setVisible(false);
-
-		} else {
-			//menu.findItem(R.id.menu_stop).setVisible(true);
-					//R.layout.actionbar_indeterminate_progress);
-		}*/
+		menu_bleselect = menu;
 		return true;
+	}
+
+	Handler handler=new Handler();
+	final Runnable updateTask=new Runnable() {
+		@Override
+		public void run() {
+			date = (DateFormat.format("dd-MM-yyyy HH:mm:ss", new java.util.Date()).toString());
+			data_ora.setText(date);
+			textStatus.setText("STATE: " + mBluetoothLeService.BLE_STATUS_CONNECTION_STRING);
+			handler.postDelayed(this,1000);
+		}
+	};
+
+	Handler handler_scanning=new Handler();
+	final Runnable updateTask_scanning=new Runnable() {
+		@Override
+		public void run() {
+			if(mScanning){
+				  handler.postDelayed(this,100);
+			}else{
+				menu_bleselect.findItem(R.id.scanning).setActionView(null);
+				Intent intent = new Intent(getApplicationContext(),Device.class);
+				startActivityForResult(intent, REQUEST_CODE);
+			}
+		}
+	};
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		//requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
+		setContentView(R.layout.main);
+		//getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.title);
+		uuidTv = (TextView) findViewById(R.id.uuid);
+		lastUuid = (TextView) findViewById(R.id.lastDevice);
+		parametro1 = (TextView) findViewById(R.id.param1);
+		data_ora=(TextView)findViewById(R.id.textDataOra);
+		textStatus=(TextView)findViewById(R.id.textStatus);
+		handler.postDelayed(updateTask, 1000);
+		//********************
+		readConnDevice();
+		/*
+				Timer mNewTimer = new Timer();
+				mNewTimer.schedule(new TimerTask() {
+
+					@Override
+					public void run() {
+						for (BluetoothDevice device : mDevice)
+							if ((device.getAddress().equals(mDeviceAddress))) {
+								ConnessioneBLEState=mBluetoothLeService.connect(mDeviceAddress);
+
+								return;
+							}
+
+						runOnUiThread(new Runnable() {
+							@Override
+							public void run() {
+								Toast toast = Toast.makeText(BLESelect.this,
+										"No Last connect device!",
+										Toast.LENGTH_SHORT);
+								toast.setGravity(Gravity.CENTER, 0, 0);
+								toast.show();
+							}
+						});
+
+					}
+				}, SCAN_PERIOD);*/
+
+		if (!getPackageManager().hasSystemFeature(
+				PackageManager.FEATURE_BLUETOOTH_LE)) {
+			Toast.makeText(this, "Ble not supported", Toast.LENGTH_SHORT)
+					.show();
+			finish();
+		}
+
+		final BluetoothManager mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+		mBluetoothAdapter = mBluetoothManager.getAdapter();
+		if (mBluetoothAdapter == null) {
+			Toast.makeText(this, "Ble not supported", Toast.LENGTH_SHORT)
+					.show();
+			finish();
+			return;
+		}
+
+		gattServiceIntent = new Intent(BLESelect.this, BLService.class);
+		bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
 	}
 
 	private AudioTrack generateTone(double freqHz, int durationMs)

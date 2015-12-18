@@ -30,7 +30,7 @@ public class List_adapter extends ArrayAdapter<user> {
 
 		LayoutInflater inflater = (LayoutInflater) context
 				.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
-		View view = inflater.inflate(R.layout.list_items, parent, false);
+		View view = inflater.inflate(R.layout.display_items_list, parent, false);
 		user temp = listdata.get(position);
 
 		TextView id= (TextView) view.findViewById(R.id.identifier);

@@ -20,8 +20,9 @@ public class Display_items extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.sql_list);
-
+		setContentView(R.layout.display_items);
+		getActionBar().setDisplayHomeAsUpEnabled(true);
+		setTitle("Log Database");
 		manager = new SQLIte_manager(this);
 		manager.open_DB();
 		ls = (ListView) findViewById(R.id.listView_sql);
@@ -49,12 +50,12 @@ public class Display_items extends Activity {
 	}
 
 	private void setlist() {
-		List_adapter adapter = new List_adapter(this, R.layout.list_items,
+		List_adapter adapter = new List_adapter(this, R.layout.display_items_list,
 				users);
 		ls.setAdapter(adapter);
 	}
 
-	/*
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 
@@ -70,20 +71,25 @@ public class Display_items extends Activity {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		int id = item.getItemId();
-		if (id == R.id.byname) {
+		if (id == R.id.back) {
+			onBackPressed();
+		}else if (id == R.id.by_id) {
 			ls.setAdapter(null);
 			users = manager.getsorted(manager.BY_ID);
 			setlist();
 			Toast.makeText(this, "Sorted by ID", Toast.LENGTH_LONG).show();
 
-		} else if (id == R.id.byage) {
+		} else if (id == R.id.delete_all) {
 			ls.setAdapter(null);
-			users = manager.getsorted(manager.BY_DATE_DISC);
+			manager.deleteAll();
+			users = manager.getall();
 			setlist();
 
 			Toast.makeText(this, "Delete ALL", Toast.LENGTH_LONG).show();
+		}else if (id == android.R.id.home) {
+			finish();
 		}
 		return super.onOptionsItemSelected(item);
 	}
-	*/
+
 }

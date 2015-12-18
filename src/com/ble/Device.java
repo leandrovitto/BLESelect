@@ -8,7 +8,6 @@ import java.util.Map;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
@@ -67,7 +66,7 @@ public class Device extends Activity implements OnItemClickListener {
 		}
 
 		adapter = new SimpleAdapter(getApplicationContext(), listItems,
-				R.layout.list_item, new String[] { "name", "address" },
+				R.layout.device_list_list, new String[] { "name", "address" },
 				new int[] { R.id.deviceName, R.id.deviceAddr });
 		listView.setAdapter(adapter);
 		listView.setOnItemClickListener(this);

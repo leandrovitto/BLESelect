@@ -1,10 +1,23 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
 
+
     <item
-        android:id="@+id/action_settings"
+        android:id="@+id/connect_memory"
         android:orderInCategory="100"
-        android:showAsAction="never"
-        android:title="@string/action_settings"/>
+        android:showAsAction="always"
+        android:title="@string/connect_Memory"/>
+    <item
+        android:id="@+id/scanning"
+        android:orderInCategory="100"
+        android:showAsAction="always"
+        android:title="@string/scanning"/>
+
+    <item
+        android:id="@+id/action_log"
+        android:orderInCategory="100"
+        android:showAsAction="always"
+        android:title="@string/log"/>
+
 
 </menu>
 <!-- From: file:/Users/leandro/AndroidStudioProjects/BLESelect/res/menu/bleselect.xml -->

@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class SQLite_helper extends SQLiteOpenHelper {
  
-	private static final String DATABASE_NAME = "data_devi";
+	private static final String DATABASE_NAME = "storage";
 	private static final int DATABASE_VERSION = 1;
 	public static final String TABLE_USER = "user";
 	public static final String COLUMN_ID = "id";
@@ -23,16 +23,20 @@ public class SQLite_helper extends SQLiteOpenHelper {
 					COLUMN_DATE_CONNECTION + " TEXT, " +
 					COLUMN_DATE_DISCONNECTION + " TEXT, " +
 					COLUMN_RSSI_CONN + " TEXT, " +
-					COLUMN_RSSI_DISCONN + " TEXT " +
-					COLUMN_DEV + " TEXT)";
+					COLUMN_RSSI_DISCONN + " TEXT, " +
+					COLUMN_DEV + " TEXT ) ";
 	
 	public SQLite_helper(Context context) {
+
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
+		//context.deleteDatabase(DATABASE_NAME);
 	}
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
+
 		db.execSQL(TABLE_CREATE);
+
 	 	}
 
 	@Override

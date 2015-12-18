@@ -2,5 +2,13 @@
 <resources>
     <!-- From: file:/Users/leandro/AndroidStudioProjects/BLESelect/res/values-sw720dp-land/dimens.xml -->
     <eat-comment/>
-    <dimen name="activity_horizontal_margin">128dp</dimen>
+    <dimen name="horizontal_page_margin">@dimen/margin_huge</dimen>
+    <dimen name="vertical_page_margin">@dimen/margin_medium</dimen>
+    <!-- From: file:/Users/leandro/AndroidStudioProjects/BLESelect/res/values-sw720dp-land/styles.xml -->
+    <eat-comment/>
+    <style name="Widget.SampleMessage">
+        <item name="android:textAppearance">?android:textAppearanceLarge</item>
+        <item name="android:lineSpacingMultiplier">1.2</item>
+        <item name="android:shadowDy">-6.5</item>
+    </style>
 </resources>

@@ -7,7 +7,7 @@
     <ListView
         android:id="@+id/listView_sql"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" >
+        android:layout_height="wrap_content">
     </ListView>
 
-</LinearLayout><!-- From: file:/Users/leandro/AndroidStudioProjects/BLESelect/res/layout/sql_list.xml -->
+</LinearLayout>
