@@ -15,9 +15,15 @@ public class SQLIte_manager {
 	Context context;
 	public static int BY_ID = 0;
 	public static int BY_DATE_DISC = 1;
-	private static String[] coloumns = { SQLite_helper.COLUMN_ID,SQLite_helper.COLUMN_DATE_CONNECTION,
-			SQLite_helper.COLUMN_RSSI_DISCONN, SQLite_helper.COLUMN_DATE_DISCONNECTION,
-			SQLite_helper.COLUMN_RSSI_CONN };
+	private static String[] coloumns = {
+			SQLite_helper.COLUMN_ID,
+			SQLite_helper.COLUMN_DATE_CONNECTION,
+			SQLite_helper.COLUMN_RSSI_DISCONN,
+			SQLite_helper.COLUMN_DATE_DISCONNECTION,
+			SQLite_helper.COLUMN_RSSI_CONN,
+			SQLite_helper.COLUMN_DEV
+
+	};
 
 	public SQLIte_manager(Context con) {
 		dbhelper = new SQLite_helper(con);
@@ -39,6 +45,7 @@ public class SQLIte_manager {
 		info.put(SQLite_helper.COLUMN_DATE_DISCONNECTION, us.getDate_disconnection());
 		info.put(SQLite_helper.COLUMN_RSSI_CONN, us.getRssi_conn());
 		info.put(SQLite_helper.COLUMN_RSSI_DISCONN, us.getRssi_discon());
+		info.put(SQLite_helper.COLUMN_DEV, us.getDev());
 		dbdata.insert(SQLite_helper.TABLE_USER, null, info);
 	  	}
 
@@ -102,6 +109,9 @@ public class SQLIte_manager {
 
 				temp.setRssi_discon(cur.getString(cur
 						.getColumnIndex(SQLite_helper.COLUMN_RSSI_DISCONN)));
+
+				temp.setDev(cur.getString(cur
+						.getColumnIndex(SQLite_helper.COLUMN_DEV)));
 				users.add(temp);
 			}
 
@@ -148,6 +158,12 @@ public class SQLIte_manager {
 	public void update_DataConnect(int id,String v){
 		ContentValues con = new ContentValues();
 		con.put(SQLite_helper.COLUMN_DATE_CONNECTION, v);
+		dbdata.update(SQLite_helper.TABLE_USER, con, SQLite_helper.COLUMN_ID + "=" + id,null);
+	}
+
+	public void update_Device(int id,String v){
+		ContentValues con = new ContentValues();
+		con.put(SQLite_helper.COLUMN_DEV, v);
 		dbdata.update(SQLite_helper.TABLE_USER, con, SQLite_helper.COLUMN_ID + "=" + id,null);
 	}
 }

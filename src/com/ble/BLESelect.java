@@ -42,6 +42,7 @@ import android.os.IBinder;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
@@ -113,10 +114,9 @@ public class BLESelect extends Activity {
 	private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
 		@Override
-		public void onServiceConnected(ComponentName componentName,
-									   IBinder service) {
-			mBluetoothLeService = ((BLService.LocalBinder) service)
-					.getService();
+		public void onServiceConnected(ComponentName componentName,IBinder service) {
+			mBluetoothLeService = ((BLService.LocalBinder) service).getService();
+
 			if (!mBluetoothLeService.initialize()) {
 				Log.e(TAG, "Unable to initialize Bluetooth");
 				finish();
@@ -126,7 +126,7 @@ public class BLESelect extends Activity {
 		@Override
 		public void onServiceDisconnected(ComponentName componentName) {
 			Log.e(TAG, "onServiceDisconnected");
-			mBluetoothLeService = null;
+			//mBluetoothLeService = null;
 
 		}
 	};
@@ -139,7 +139,7 @@ public class BLESelect extends Activity {
 			if (BLService.ACTION_GATT_CONNECTED.equals(action)) {
 				flag = true;
 				connState = true;
-				//writeToFile(mDeviceName + " ( " + mDeviceAddress + " )");
+				writeToFile(mDeviceName + " ( " + mDeviceAddress + " )");
 				lastUuid.setText(mDeviceName + " ( " + mDeviceAddress + " )");
 				lastDeviceBtn.setVisibility(View.GONE);
 				logBtn.setVisibility(View.GONE);
@@ -153,6 +153,7 @@ public class BLESelect extends Activity {
 				user u=new user();
 				date = (DateFormat.format("dd-MM-yyyy HH:mm:ss", new java.util.Date()).toString());
 				u.setDate_connection(date);
+				u.setDev(mDeviceName + " ( " + mDeviceAddress + " )");
 				manager.create(u);
 				generateTone(300, 250).play();
 				Toast.makeText(getApplicationContext(), "Saved:Connected @ "+date,
@@ -163,7 +164,7 @@ public class BLESelect extends Activity {
 				connState = false;
 				first_run=true;
 
-
+				uuidTv.setText("");
 				parametro1.setText("");
 				manager=new SQLIte_manager(BLESelect.this);
 				manager.open_DB();
@@ -173,13 +174,16 @@ public class BLESelect extends Activity {
 				Toast.makeText(getApplicationContext(), "Saved:Disconnected @ " + date,
 						Toast.LENGTH_LONG).show();
 				//scanLeDevice();
-				ConnessioneBLEState=mBluetoothLeService.connect(mDeviceAddress);
+				//gattServiceIntent = new Intent(BLESelect.this, BLService.class);
+				//bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+				//ConnessioneBLEState=mBluetoothLeService.connect(mDeviceAddress);
+				//registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 			} else if (BLService.ACTION_GATT_RSSI.equals(action)) {
 				//EFFETTUO UNA MEDIA DI 10 VALORI e LI VISUALIZZO
 				//RSSI Ha oscillazioni molto forti causa onde radio
 
 					valori_rssi+=Integer.parseInt(
-							intent.getStringExtra(BLService.EXTRA_DATA));
+							intent.getStringExtra(BLService.EXTRA_RSSI));
 					k_conta_rssi++;
 					if(k_conta_rssi==20){
 						//Log.i(TAG, "|||" + valori_rssi / 20);
@@ -197,15 +201,13 @@ public class BLESelect extends Activity {
 					}
 
 			} else if (BLService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
-
 				displayGattServices(mBluetoothLeService.getSupportedGattServices());
 				Log.e(TAG, "ACTION_GATT_SERVICES_DISCOVERED" + mNotifyCharacteristic);
 				if(mNotifyCharacteristic!=null)
 					startReadCharacter(mNotifyCharacteristic);
 			} else if (BLService.ACTION_DATA_AVAILABLE.equals(action)) {
 				Log.e(TAG, "ACTION_DATA_AVAILABLE");
-				if(mNotifyCharacteristic!=null)
-					displayCharacteristic_STM32(mNotifyCharacteristic);
+				displayData_STM32(intent.getStringExtra(BLService.EXTRA_DATA));
 			}
 
 		}
@@ -251,6 +253,7 @@ public class BLESelect extends Activity {
 		return line;
 	}
 
+
 	private void displayData(String data) {
 		if (data != null) {
 			int dBm=Integer.parseInt(data);
@@ -261,7 +264,7 @@ public class BLESelect extends Activity {
 
 	private void displayData_STM32(String data) {
 		if (data != null) {
-			parametro1.setText("Accelerometro:\t" + data);
+			parametro1.setText(data);
 		}
 	}
 
@@ -285,8 +288,6 @@ public class BLESelect extends Activity {
 	}
 
 
-
-
 	private void startReadCharacter(final BluetoothGattCharacteristic cha) {
 		new Thread() {
 			public void run() {
@@ -306,14 +307,13 @@ public class BLESelect extends Activity {
 		}.start();
 	}
 
-	Handler handler=new Handler();
 
+	Handler handler=new Handler();
 	final Runnable updateTask=new Runnable() {
 		@Override
 		public void run() {
 			date = (DateFormat.format("dd-MM-yyyy HH:mm:ss", new java.util.Date()).toString());
 			data_ora.setText(date);
-			ConnessioneBLEState_message=mBluetoothLeService.BLE_STATUS_CONNECTION_STRING;
 			textStatus.setText(mBluetoothLeService.BLE_STATUS_CONNECTION_STRING);
 			handler.postDelayed(this,1000);
 		}
@@ -341,7 +341,7 @@ public class BLESelect extends Activity {
 
 		String connDeviceInfo = readConnDevice();
 		if (connDeviceInfo == null) {
-			lastUuid.setText("");
+			lastUuid.setText("--");
 		} else {
 			mDeviceName = connDeviceInfo.split("\\( ")[0].trim();
 			String str = connDeviceInfo.split("\\( ")[1];
@@ -355,6 +355,7 @@ public class BLESelect extends Activity {
 
 			@Override
 			public void onClick(View v) {
+
 
 				mDevice.clear();
 				String connDeviceInfo = readConnDevice();
@@ -429,8 +430,11 @@ public class BLESelect extends Activity {
 					uuidTv.setText(R.string.no_connected);
 					lastDeviceBtn.setVisibility(View.VISIBLE);
 					logBtn.setVisibility(View.VISIBLE);
-					gattServiceIntent = new Intent(BLESelect.this, BLService.class);
-					bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+					manager=new SQLIte_manager(BLESelect.this);
+					manager.open_DB();
+					manager.update_DataDisconnect(manager.getHighestID(), date);
+					manager.update_RssiDisconnect(manager.getHighestID(), rssi_avg);
+					generateTone(330, 250).play();
 
 				}
 			}
@@ -455,6 +459,9 @@ public class BLESelect extends Activity {
 			finish();
 		}
 
+
+		//mBluetoothLeService.initialize();
+
 		final BluetoothManager mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
 		mBluetoothAdapter = mBluetoothManager.getAdapter();
 		if (mBluetoothAdapter == null) {
@@ -476,10 +483,12 @@ public class BLESelect extends Activity {
 			Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
 			startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
 		}
-
 		registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 
 	}
+
+
+
 
 
 
@@ -501,9 +510,10 @@ public class BLESelect extends Activity {
 	protected void onStop() {
 		super.onStop();
 
-		flag = false;
+		//flag = false;
 
-		unregisterReceiver(mGattUpdateReceiver);
+		//
+		// unregisterReceiver(mGattUpdateReceiver);
 	}
 
 	@Override
@@ -530,6 +540,7 @@ public class BLESelect extends Activity {
 			mDeviceAddress = data.getStringExtra(Device.EXTRA_DEVICE_ADDRESS);
 			mDeviceName = data.getStringExtra(Device.EXTRA_DEVICE_NAME);
 			ConnessioneBLEState=mBluetoothLeService.connect(mDeviceAddress);
+
 		}
 
 		super.onActivityResult(requestCode, resultCode, data);
@@ -572,6 +583,10 @@ public class BLESelect extends Activity {
 		}
 	};
 
+	//displayGattServices:ricava i servizi e le caratteristiche del GATT SERVER ma ne elabora solo la 0' del 2' servizio
+	//la scheda stm32 per come l'ho programmata emette due servizi GATT uno read lo 0 dove scrive i dati dei sensori
+	//e uno wrire il 1 dove si aspetta dati che l'applicazione potrebbe mandare a sua volta verso la scheda STM32
+	//0 e 1 servizio sono per i GAP SERVER contengono solo informazioni del device
 
 	private void displayGattServices(List<BluetoothGattService> gattServices) {
 
@@ -638,9 +653,8 @@ public class BLESelect extends Activity {
 				// If there is an active notification on a characteristic, clear
 				// it first so it doesn't update the data field on the user interface.
 				if (mNotifyCharacteristic != null) {
-					mBluetoothLeService.setCharacteristicNotification(
-							mNotifyCharacteristic, false);
-					mNotifyCharacteristic = null;
+					//mBluetoothLeService.setCharacteristicNotification(mNotifyCharacteristic, false);
+					//mNotifyCharacteristic = null;
 				}
 				mBluetoothLeService.readCharacteristic(characteristic);
 
@@ -652,8 +666,7 @@ public class BLESelect extends Activity {
 
 				characteristic.addDescriptor(descriptor);
 
-				mBluetoothLeService.setCharacteristicNotification(
-						characteristic, true);
+				mBluetoothLeService.setCharacteristicNotification(characteristic, true);
 			}
 			//return true;
 			for (BluetoothGattDescriptor descriptor : characteristic.getDescriptors()) {
@@ -662,58 +675,17 @@ public class BLESelect extends Activity {
 		}
 	}
 
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.bleselect, menu);
+		/*if (!mScanning) {
+			//menu.findItem(R.id.menu_stop).setVisible(false);
 
-
-	private void displayCharacteristic_STM32(final BluetoothGattCharacteristic characteristic) {
-
-
-		String msg;
-		byte[] ADCValue3 = characteristic.getValue();
-		String adc3Hex = ADCValue3.toString()
-				.replace("[", "")   
-				.replace("]", "");
-
-//      Log.e("ADC3", "ADC CH3 characteristicvalue from TEST is " + adc3Hex);
-//      Log.i("ADC3", "ADC Last 6CH3 characteristicvalue from TEST is " + adc3Hex.substring(adc3Hex.length() - 6));  //Prints last 6 of this string
-
-		// Get UUID
-		String ch3 = (String.valueOf(characteristic.getUuid()));
-		String ch3UUID = ch3.substring(0, Math.min(ch3.length(), 8));
-//      Log.d("ADC3", "ADC FIRST 6CH3 characteristicvalue from TEST is " + ch3.substring(0, Math.min(ch3.length(), 8)));  //Print first 6 of this string
-
-
-		String adc3hex6 = adc3Hex.substring(adc3Hex.length() - 6);
-
-		StringBuilder sb = new StringBuilder();
-		for (byte b : ADCValue3) {
-			if (sb.length() > 0) {
-				//sb.append(':');
-			}
-		sb.append(String.format("%02x", b)); }
-		StringBuilder sb1 = new StringBuilder();
-		sb1.append(sb.substring(6, 8));
-		sb1.append(sb.substring(4, 6));
-		String test=sb1.toString();
-		Log.w("ADC3", "StringBuilder------ " + sb1);
-		short acc_x = (short) Integer.parseInt(test,16);
-		StringBuilder sb2 = new StringBuilder();
-		sb2.append(sb.substring(10, 12));
-		sb2.append(sb.substring(8, 10));
-		test=sb2.toString();
-		short acc_y = (short) Integer.parseInt(test,16);
-		StringBuilder sb3 = new StringBuilder();
-		sb3.append(sb.substring(14));
-		sb3.append(sb.substring(12, 14));
-		test=sb3.toString();
-		short acc_z = (short) Integer.parseInt(test,16);
-
-		Log.w("ADC3", "StringBuilder " + sb + "****** " + acc_x + " | " + acc_y + " | " + acc_z + " | ");
-		msg = "|X:"+ acc_x + " |Y: " + acc_y + " |Z: " + acc_z + " | ";
-		displayData_STM32(msg);
-
-
-
-
+		} else {
+			//menu.findItem(R.id.menu_stop).setVisible(true);
+					//R.layout.actionbar_indeterminate_progress);
+		}*/
+		return true;
 	}
 
 	private AudioTrack generateTone(double freqHz, int durationMs)

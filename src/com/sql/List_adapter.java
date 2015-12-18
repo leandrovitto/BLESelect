@@ -38,12 +38,14 @@ public class List_adapter extends ArrayAdapter<user> {
 		TextView age = (TextView) view.findViewById(R.id.Rssi_Conn);
 		TextView email = (TextView) view.findViewById(R.id.Data_Disconnessione);
 		TextView phone = (TextView) view.findViewById(R.id.Rssi_Disc);
+		TextView dev=(TextView) view.findViewById(R.id.Dev);
 
 		id.setText("ID:"+ temp.getId());
 		name.setText("CONNESSO DATA:" + temp.getDate_connection());
 		age.setText("RSSI CONN: "+temp.getRssi_conn());
 		email.setText("DISCONNESSO DATA: "+temp.getDate_disconnection());
 		phone.setText("RSSI DISCONN: "+temp.getRssi_discon());
+		dev.setText("DEV:"+temp.getDev());
 		return view;
 	}
 }

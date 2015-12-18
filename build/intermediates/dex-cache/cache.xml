@@ -8,5 +8,12 @@
         sha1="4a6be13368bb64c5a0b0460632d228a1a915f58f">
         <dex dex="/Users/leandro/Downloads/Android-master/Examples/Android Studio Examples/BLESelect/build/intermediates/pre-dexed/debug/android-support-v4-9e6f3dba5f147c20276011087d110f1911f7ca3f.jar" />
     </item>
+    <item
+        jar="/Users/leandro/AndroidStudioProjects/BLESelect/libs/android-support-v4.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="4a6be13368bb64c5a0b0460632d228a1a915f58f">
+        <dex dex="/Users/leandro/AndroidStudioProjects/BLESelect/build/intermediates/pre-dexed/debug/android-support-v4-340277207ac293b0b09c927122f059a9000b1fa9.jar" />
+    </item>
 
 </items>

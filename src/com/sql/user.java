@@ -7,6 +7,16 @@ public class user {
 	String date_disconnection;
 	String rssi_conn;
 
+	public String getDev() {
+		return dev;
+	}
+
+	public void setDev(String device) {
+		this.dev = dev;
+	}
+
+	String dev;
+
 	public String getId() {
 		return id;
 	}

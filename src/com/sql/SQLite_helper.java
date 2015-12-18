@@ -7,14 +7,15 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class SQLite_helper extends SQLiteOpenHelper {
  
-	private static final String DATABASE_NAME = "data";
-	private static final int DATABASE_VERSION = 1;	
+	private static final String DATABASE_NAME = "data_devi";
+	private static final int DATABASE_VERSION = 1;
 	public static final String TABLE_USER = "user";
 	public static final String COLUMN_ID = "id";
 	public static final String COLUMN_DATE_CONNECTION = "date_connection";
 	public static final String COLUMN_DATE_DISCONNECTION = "date_disconnection";
 	public static final String COLUMN_RSSI_CONN = "rssi_conn";
 	public static final String COLUMN_RSSI_DISCONN = "rssi_discon";
+	public static final String COLUMN_DEV = "dev";
 	
 	private static final String TABLE_CREATE = 
 			"CREATE TABLE " + TABLE_USER + " (" +
@@ -22,8 +23,8 @@ public class SQLite_helper extends SQLiteOpenHelper {
 					COLUMN_DATE_CONNECTION + " TEXT, " +
 					COLUMN_DATE_DISCONNECTION + " TEXT, " +
 					COLUMN_RSSI_CONN + " TEXT, " +
-					COLUMN_RSSI_DISCONN + " NUMERIC " +
-					")";		 			
+					COLUMN_RSSI_DISCONN + " TEXT " +
+					COLUMN_DEV + " TEXT)";
 	
 	public SQLite_helper(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);

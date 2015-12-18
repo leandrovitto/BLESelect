@@ -26,7 +26,7 @@ public class Display_items extends Activity {
 		manager.open_DB();
 		ls = (ListView) findViewById(R.id.listView_sql);
 		users = new ArrayList<user>();
-		users = manager.getsorted(manager.BY_ID);
+		users = manager.getall();
 		setlist();
 
 		/*
@@ -54,6 +54,7 @@ public class Display_items extends Activity {
 		ls.setAdapter(adapter);
 	}
 
+	/*
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 
@@ -80,8 +81,9 @@ public class Display_items extends Activity {
 			users = manager.getsorted(manager.BY_DATE_DISC);
 			setlist();
 
-			Toast.makeText(this, "Sorted by DATA DISCONNESSIONE", Toast.LENGTH_LONG).show();
+			Toast.makeText(this, "Delete ALL", Toast.LENGTH_LONG).show();
 		}
 		return super.onOptionsItemSelected(item);
 	}
+	*/
 }

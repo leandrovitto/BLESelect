@@ -37,9 +37,7 @@ import android.text.format.DateFormat;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.sql.SQLIte_manager;
-import com.sql.SQLite_helper;
-import com.sql.user;
+
 
 /**
  * Service for managing connection and data communication with a GATT server
@@ -52,10 +50,10 @@ public class BLService extends Service {
 	private BluetoothAdapter mBluetoothAdapter;
 	private String mBluetoothDeviceAddress;
 	private BluetoothGatt mBluetoothGatt;
-	private BLESelect bleSelect;
+/*
 	SQLIte_manager manager;
 	SQLite_helper hlep;
-	String date;
+	String date;*/
 
 	public final static String ACTION_GATT_CONNECTED = "ACTION_GATT_CONNECTED";
 	public final static String ACTION_GATT_DISCONNECTED = "ACTION_GATT_DISCONNECTED";
@@ -63,8 +61,9 @@ public class BLService extends Service {
 	public final static String ACTION_GATT_RSSI = "ACTION_GATT_RSSI";
 	public final static String ACTION_DATA_AVAILABLE = "ACTION_DATA_AVAILABLE";
 	public final static String EXTRA_DATA = "EXTRA_DATA";
+
 	public String BLE_STATUS_CONNECTION_STRING="";
-	public String RSSI="EXTRA_RSSI";
+	public final static String EXTRA_RSSI="EXTRA_RSSI";
 	/*public final static UUID UUID_BLE_SHIELD_TX = UUID
 			.fromString(RBLGattAttributes.BLE_SHIELD_TX);
 	public final static UUID UUID_BLE_SHIELD_RX = UUID
@@ -81,36 +80,43 @@ public class BLService extends Service {
 		public void onConnectionStateChange(BluetoothGatt gatt, int status,
 				int newState) {
 			String intentAction;
-
+			Log.i(TAG, "STATUS:" + status);
 			if (newState == BluetoothProfile.STATE_CONNECTED) {
 				intentAction = ACTION_GATT_CONNECTED;
 				broadcastUpdate(intentAction);
 				Log.i(TAG, "Connected to GATT server.");
-				BLE_STATUS_CONNECTION_STRING="Connected to GATT server.";
+				BLE_STATUS_CONNECTION_STRING="Connected to GATT server STM32.";
+
 				// Attempts to discover services after successful connection.
 				Log.i(TAG, "Attempting to start service discovery:"
 						+ mBluetoothGatt.discoverServices());
 			} else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
 				intentAction = ACTION_GATT_DISCONNECTED;
 				Log.i(TAG, "Disconnected from GATT server.");
-				BLE_STATUS_CONNECTION_STRING="Disconnected from GATT server.";
+				BLE_STATUS_CONNECTION_STRING="Disconnected from GATT server STM32.";
+
 				broadcastUpdate(intentAction);
 			}
+
+			if (status== BluetoothGatt.GATT_FAILURE){
+				BLE_STATUS_CONNECTION_STRING="GATT Failure STM32.";
+			}
+
 		}
 
 		public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
 			if (status == BluetoothGatt.GATT_SUCCESS) {
-				RSSI=String.valueOf(rssi);
 				broadcastUpdate(ACTION_GATT_RSSI, rssi);
 			} else {
 				Log.w(TAG, "onReadRemoteRssi received: " + status);
 			}
-		};
+		}
 
 		@Override
 		public void onServicesDiscovered(BluetoothGatt gatt, int status) {
 			if (status == BluetoothGatt.GATT_SUCCESS) {
 				broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
+				//BLE_STATUS_CONNECTION_STRING="ACTION_GATT_SERVICES_DISCOVERED";
 				Log.w(TAG, "onServicesDiscovered received: " + status);
 			} else {
 				Log.w(TAG, "onServicesDiscovered not received: " + status);
@@ -130,6 +136,10 @@ public class BLService extends Service {
 				BluetoothGattCharacteristic characteristic) {
 			broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
 		}
+
+
+
+
 	};
 
 	private void broadcastUpdate(final String action) {
@@ -139,47 +149,77 @@ public class BLService extends Service {
 
 	private void broadcastUpdate(final String action, int rssi) {
 		final Intent intent = new Intent(action);
-
-		intent.putExtra(EXTRA_DATA, String.valueOf(rssi));
+        //BLE_STATUS_CONNECTION_STRING=String.valueOf(rssi);
+		//System.out.println(String.valueOf(rssi));
+		intent.putExtra(EXTRA_RSSI, String.valueOf(rssi));
 		sendBroadcast(intent);
 	}
 
-	private void broadcastUpdate(final String action,
-			final BluetoothGattCharacteristic characteristic) {
+	private void broadcastUpdate(final String action,final BluetoothGattCharacteristic characteristic) {
+
 		final Intent intent = new Intent(action);
 
-		// This is special handling for the Heart Rate Measurement profile. Data
-		// parsing is
-		// carried out as per profile specifications:
-		// http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.heart_rate_measurement.xml
-		/*if (UUID_BLE_SHIELD_RX.equals(characteristic.getUuid())) {
-			final byte[] rx = characteristic.getValue();
-			intent.putExtra(EXTRA_DATA, rx);
-		}else if(UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {*/
-          /*  int flag = characteristic.getProperties();
-            int format = -1;
-            if ((flag & 0x01) != 0) {
-                format = BluetoothGattCharacteristic.FORMAT_UINT16;
-                Log.d(TAG, "Heart rate format UINT16.");
-            } else {
-                format = BluetoothGattCharacteristic.FORMAT_UINT8;
-                Log.d(TAG, "Heart rate format UINT8.");
-            }
-            final int heartRate = characteristic.getIntValue(format, 1);
-            Log.d(TAG, String.format("Received heart rate: %d", heartRate));
-            intent.putExtra(EXTRA_DATA, String.valueOf(heartRate));
-        } else {*/
-            // For all other profiles, writes the data formatted in HEX.
-            final byte[] data = characteristic.getValue();
-		Log.e(TAG, "----->>BYTE>>>>>"+intent.getStringExtra(BLService.EXTRA_DATA));
-            if (data != null && data.length > 0) {
-                final StringBuilder stringBuilder = new StringBuilder(data.length);
-                for(byte byteChar : data)
-                    stringBuilder.append(String.format("%02X ggg ", byteChar));
-                intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
-            }
-        //}
+		if (UUID_STM32_ACCELEROMETER_PARAMETER.equals(characteristic.getUuid())) {
+			//é una elaborazione dei dati inviati dalla scheda ST32 che invia i dati come un flusso di byte ad otetti
+			//quindi converto in esadecimale e scambio i primi due ottetti per ottrenerli in ordine
+			//0000-0000-0000-0000|acc_x_bit_meno_significativi[8byte]-acc_x_bit_significativi[8byte]|acc_y_meno..-acc_y..|acc_z_meno...-acc_
+			// in hex ogni 4 byte ho un valore
+			//0-1-2-3|4-5-6-7|8-9-10-11|12-13-14-15
+			//per acc_x devo avere i blocchi 6-7-4-5 affiancati
+			//per acc_y =10-11-8-9
+			//per acc_z=14-15-12-13
+			//acc_x=sb1.append(sb.substring(6, 8)) concatenato con sb1.append(sb.substring(4, 6));
+			//magari esiste un metodo meno contorto per recuperarli,io purtroppo non l'ho trovato :-(
+			byte[] stream_byte_received = characteristic.getValue();
 
+			StringBuilder sb = new StringBuilder();
+			for (byte b : stream_byte_received) {
+				sb.append(String.format("%02x", b));
+			}
+
+			StringBuilder sb1 = new StringBuilder();
+			sb1.append(sb.substring(6, 8));sb1.append(sb.substring(4, 6));
+			String test=sb1.toString();
+			short acc_x = (short) Integer.parseInt(test,16);
+
+			sb1 = new StringBuilder();
+			sb1.append(sb.substring(10, 12));sb1.append(sb.substring(8, 10));
+			test=sb1.toString();
+			short acc_y = (short) Integer.parseInt(test,16);
+
+			sb1 = new StringBuilder();
+			sb1.append(sb.substring(14,16));sb1.append(sb.substring(12, 14));
+			test=sb1.toString();
+			short acc_z = (short) Integer.parseInt(test,16);
+
+			sb1 = new StringBuilder();
+			sb1.append(sb.substring(18,20));sb1.append(sb.substring(16, 18));
+			test=sb1.toString();
+			short temperatura = (short) Integer.parseInt(test,16);
+
+			sb1 = new StringBuilder();
+			sb1.append(sb.substring(22,24));sb1.append(sb.substring(20, 22));
+			test=sb1.toString();
+			short Humidity = (short) Integer.parseInt(test,16);
+
+			//EVENTUALE SENSORE DA CATTURARE ESEMPIO TEMPERATURA,AFFIANCO NEL VETTORE GATT DEL DEVICE ST32
+			//16-17-18-19
+			//sbX.append(sb.substring(18));sbX.append(sb.substring(16, 18));
+
+			Log.w("ADC3", "StringBuilder " + sb + "************************** " + acc_x + " | " + acc_y + " | " + acc_z + " | ");
+			String accelerometer = "|X:"+ acc_x + " |Y: " + acc_y + " |Z: " + acc_z + " | ";
+			String extra_data="Temp:"+temperatura+"°\nHumidity:"+Humidity+"%\nAccelerometer:\t" + accelerometer;
+			intent.putExtra(EXTRA_DATA, extra_data);
+
+		}else{
+			final byte[] data = characteristic.getValue();
+			if (data != null && data.length > 0) {
+				final StringBuilder stringBuilder = new StringBuilder(data.length);
+				for(byte byteChar : data)
+					stringBuilder.append(String.format("%02X", byteChar));
+				intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
+			}
+		}
 		sendBroadcast(intent);
 	}
 
@@ -249,6 +289,7 @@ public class BLService extends Service {
 			Log.w(TAG,
 					"BluetoothAdapter not initialized or unspecified address.");
 			BLE_STATUS_CONNECTION_STRING="BluetoothAdapter not initialized or unspecified address.";
+
 			return false;
 		}
 
@@ -259,12 +300,9 @@ public class BLService extends Service {
 			Log.d(TAG,
 					"Trying to use an existing mBluetoothGatt for connection.");
 			BLE_STATUS_CONNECTION_STRING="Trying to use an existing mBluetoothGatt for connection.";
-			if (mBluetoothGatt.connect()) {
 
-				return true;
-			} else {
-				return false;
-			}
+			return mBluetoothGatt.connect();
+
 		}
 
 		final BluetoothDevice device = mBluetoothAdapter
@@ -272,14 +310,18 @@ public class BLService extends Service {
 		if (device == null) {
 			Log.w(TAG, "Device not found.  Unable to connect.");
 			BLE_STATUS_CONNECTION_STRING="Device not found.  Unable to connect.";
+
 			return false;
 		}
 		// We want to directly connect to the device, so we are setting the
 		// autoConnect
 		// parameter to false.
-		mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
+
+		mBluetoothGatt = device.connectGatt(this, true, mGattCallback);
+
 		Log.d(TAG, "Trying to create a new connection.");
 		BLE_STATUS_CONNECTION_STRING="Trying to create a new connection.";
+
 		mBluetoothDeviceAddress = address;
 
 		return true;
@@ -339,14 +381,14 @@ public class BLService extends Service {
 		mBluetoothGatt.readRemoteRssi();
 	}
 
-	public void writeCharacteristic(BluetoothGattCharacteristic characteristic) {
+	/*public void writeCharacteristic(BluetoothGattCharacteristic characteristic) {
 		if (mBluetoothAdapter == null || mBluetoothGatt == null) {
 			Log.w(TAG, "BluetoothAdapter not initialized");
 			return;
 		}
 
 		mBluetoothGatt.writeCharacteristic(characteristic);
-	}
+	}*/
 
 	/**
 	 * Enables or disables notification on a give characteristic.
@@ -363,9 +405,6 @@ public class BLService extends Service {
 			return;
 		}
 		mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
-
-
-		// This is specific to Heart Rate Measurement.
 
 		if (UUID_STM32_ACCELEROMETER_PARAMETER.equals(characteristic.getUuid())) {
 			BluetoothGattDescriptor descriptor = characteristic.getDescriptor(

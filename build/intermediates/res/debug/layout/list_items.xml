@@ -31,4 +31,9 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content" />
 
-</LinearLayout><!-- From: file:/Users/leandro/Downloads/Android-master/Examples/Android%20Studio%20Examples/BLESelect/res/layout/list_items.xml -->
+    <TextView
+        android:id="@+id/Dev"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" />
+
+</LinearLayout><!-- From: file:/Users/leandro/AndroidStudioProjects/BLESelect/res/layout/list_items.xml -->

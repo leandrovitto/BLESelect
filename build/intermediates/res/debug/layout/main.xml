@@ -126,7 +126,7 @@
                 android:id="@+id/ConnLastDevice"
                 android:layout_width="200dp"
                 android:layout_height="100dp"
-                android:background="@drawable/red_button"
+                android:background="@drawable/red_button22"
                 android:text="@string/connLastDevice"
                 android:visibility="visible"
                 android:layout_centerVertical="true"
@@ -141,7 +141,7 @@
                 android:id="@+id/ScanAll"
                 android:layout_width="200dp"
                 android:layout_height="100dp"
-                android:background="@drawable/red_button"
+                android:background="@drawable/red_button22"
                 android:text="@string/scanAll"
                 android:layout_alignParentTop="true"
                 android:layout_alignParentStart="true"
@@ -154,7 +154,7 @@
                 android:id="@+id/Log"
                 android:layout_width="200dp"
                 android:layout_height="100dp"
-                android:background="@drawable/red_button"
+                android:background="@drawable/red_button22"
                 android:text="Log"
                 android:layout_alignParentTop="true"
                 android:layout_alignParentStart="true"
@@ -169,4 +169,4 @@
 
     </RelativeLayout>
 
-</LinearLayout><!-- From: file:/Users/leandro/Downloads/Android-master/Examples/Android%20Studio%20Examples/BLESelect/res/layout/main.xml -->
+</LinearLayout><!-- From: file:/Users/leandro/AndroidStudioProjects/BLESelect/res/layout/main.xml -->
