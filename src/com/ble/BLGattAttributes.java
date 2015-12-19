@@ -25,6 +25,7 @@ import java.util.HashMap;
 public class BLGattAttributes {
 	private static HashMap<String, String> attributes = new HashMap<String, String>();
 	public static String STM32_ACCELEROMETER_PARAMETER = "0000a001-0000-1000-8000-00805f9b34fb";
+	public static String STM32_WRITE_TO_DEVICE = "0000a002-0000-1000-8000-00805f9b34fb";
 	public static String SERVICE_STM32 = "0000a000-0000-1000-8000-00805f9b34fb";
 
 	static {
@@ -32,6 +33,7 @@ public class BLGattAttributes {
 		attributes.put("0000a000-0000-1000-8000-00805f9b34fb", "SERVICE_STM32");
 		// Sample Characteristics.
 		attributes.put("0000a001-0000-1000-8000-00805f9b34fb","STM32_ACCELEROMETER_PARAMETER");
+		attributes.put("0000a002-0000-1000-8000-00805f9b34fb","STM32_WRITE_TO_DEVICE");
 	}
 
 	public static String lookup(String uuid, String defaultName) {

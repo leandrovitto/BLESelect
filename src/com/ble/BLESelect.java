@@ -18,6 +18,8 @@ import java.util.TimerTask;
 import java.util.UUID;
 
 import android.app.Activity;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -43,6 +45,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
+import android.support.v4.app.NotificationCompat;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.Gravity;
@@ -71,9 +74,12 @@ public class BLESelect extends Activity {
 	private BLService mBluetoothLeService;
 	private BluetoothAdapter mBluetoothAdapter;
 	private BluetoothGatt mBluetoothGatt;
+	private BluetoothGattCharacteristic characteristic_write;
 	private BluetoothGattCharacteristic mNotifyCharacteristic;
 	public static List<BluetoothDevice> mDevice = new ArrayList<BluetoothDevice>();
 	private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics = new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
+
+
 
 	private final String LIST_NAME = "NAME";
 	private final String LIST_UUID = "UUID";
@@ -85,6 +91,7 @@ public class BLESelect extends Activity {
 	TextView parametro1 = null;
 	TextView data_ora = null;
 	TextView textStatus= null;
+	TextView textTodevice=null;
 	//RSSI
 	int valori_rssi;
 	String rssi_avg;
@@ -97,7 +104,7 @@ public class BLESelect extends Activity {
 	private String mDeviceName;
 
 	private boolean flag = true;
-	private boolean first_run=true;
+	private boolean first_run=true,first_run2=true;
 	boolean mScanning = false;
 	private boolean ConnessioneBLEState=false;
 
@@ -126,7 +133,9 @@ public class BLESelect extends Activity {
 	private void empty_View_disconnect(){
 		uuidTv.setText("");
 		parametro1.setText("");
+		textTodevice.setText("");
 		first_run=true;//per il calcolo dell'rssi
+		first_run2=true;
 		flag = false;//connessione spenta
 	}
 
@@ -156,8 +165,10 @@ public class BLESelect extends Activity {
 				generateTone(300, 250).play();
 				//-----------------------------------------
 				toast_notify("Saved:Connected @ " + date);
+
 				startReadRssi();
 			} else if (BLService.ACTION_GATT_DISCONNECTED.equals(action)) {
+				//mBluetoothLeService.writeCharacteristic(characteristic_write,"Disconnect to:"+ android.os.Build.MODEL);
 				empty_View_disconnect();
 				manager=new SQLIte_manager(BLESelect.this);
 				manager.open_DB();
@@ -165,6 +176,7 @@ public class BLESelect extends Activity {
 				manager.update_RssiDisconnect(manager.getHighestID(), rssi_avg);
 				generateTone(360, 250).play();
 				toast_notify("Saved:Disconnected @ " + date);
+				ConnessioneBLEState = mBluetoothLeService.connect(mDeviceAddress);
 			} else if (BLService.ACTION_GATT_RSSI.equals(action)) {
 				//EFFETTUO UNA MEDIA DI 20 VALORI e LI VISUALIZZO
 				//RSSI Ha oscillazioni molto forti causa onde radio
@@ -188,11 +200,25 @@ public class BLESelect extends Activity {
 			} else if (BLService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
 				displayGattServices(mBluetoothLeService.getSupportedGattServices());
 				Log.e(TAG, "ACTION_GATT_SERVICES_DISCOVERED" + mNotifyCharacteristic);
-				if(mNotifyCharacteristic!=null)
-					startReadCharacter(mNotifyCharacteristic);
+
 			} else if (BLService.ACTION_DATA_AVAILABLE.equals(action)) {
 				Log.e(TAG, "ACTION_DATA_AVAILABLE");
 				displayData_STM32(intent.getStringExtra(BLService.EXTRA_DATA));
+				if(first_run2){
+					first_run2=false;
+					if(characteristic_write!=null) {
+						String write_dev = "Connect:"+android.os.Build.MODEL + DateFormat.format(" dd-MM-yyyy HH:mm:ss", new java.util.Date()).toString();
+						mBluetoothLeService.writeCharacteristic(characteristic_write, write_dev);
+						textTodevice.setText("Send:"+write_dev);
+					}
+					if(mNotifyCharacteristic!=null)startReadCharacter(mNotifyCharacteristic);
+
+				}
+
+			}else if (BLService.ACTION_GATT_WRTING.equals(action)) {
+				//toast_notify("ACTION_GATT_WRTING");
+
+
 			}
 
 		}
@@ -256,6 +282,7 @@ public class BLESelect extends Activity {
 			public void run() {
 
 				while (flag) {
+
 					mBluetoothLeService.readCharacteristic(cha);
 					Log.e(TAG, "startReadCharacter:" + cha.getValue());
 					try {
@@ -282,6 +309,7 @@ public class BLESelect extends Activity {
 		intentFilter.addAction(BLService.ACTION_GATT_SERVICES_DISCOVERED);
 		intentFilter.addAction(BLService.ACTION_GATT_RSSI);
 		intentFilter.addAction(BLService.ACTION_DATA_AVAILABLE);
+		intentFilter.addAction(BLService.ACTION_GATT_WRTING);
 		return intentFilter;
 	}
 
@@ -327,8 +355,10 @@ public class BLESelect extends Activity {
 				&& resultCode == Device.RESULT_CODE) {
 			mDeviceAddress = data.getStringExtra(Device.EXTRA_DEVICE_ADDRESS);
 			mDeviceName = data.getStringExtra(Device.EXTRA_DEVICE_NAME);
+			registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 			ConnessioneBLEState=mBluetoothLeService.connect(mDeviceAddress);
 			menu_bleselect.findItem(R.id.connect_memory).setTitle("Disconnect");
+
 
 		}
 
@@ -391,34 +421,36 @@ public class BLESelect extends Activity {
 
 		// Loops through available GATT Services.
 		for (BluetoothGattService gattService : gattServices) {
-			Log.e(TAG, "BluetoothGattService: " + gattService.getUuid().toString());
-			HashMap<String, String> currentServiceData = new HashMap<String, String>();
-			uuid = gattService.getUuid().toString();
-			currentServiceData.put(
-					LIST_NAME, BLGattAttributes.lookup(uuid, unknownServiceString));
-			currentServiceData.put(LIST_UUID, uuid);
-			gattServiceData.add(currentServiceData);
+			if(BLService.UUID_SERVICE_STM32.equals(gattService.getUuid())) {
+				Log.e(TAG, "BluetoothGattService: " + gattService.getUuid().toString());
+				HashMap<String, String> currentServiceData = new HashMap<String, String>();
+				uuid = gattService.getUuid().toString();
+				currentServiceData.put(
+						LIST_NAME, BLGattAttributes.lookup(uuid, unknownServiceString));
+				currentServiceData.put(LIST_UUID, uuid);
+				gattServiceData.add(currentServiceData);
 
-			ArrayList<HashMap<String, String>> gattCharacteristicGroupData =
-					new ArrayList<HashMap<String, String>>();
-			List<BluetoothGattCharacteristic> gattCharacteristics =
-					gattService.getCharacteristics();
-			ArrayList<BluetoothGattCharacteristic> charas =
-					new ArrayList<BluetoothGattCharacteristic>();
+				ArrayList<HashMap<String, String>> gattCharacteristicGroupData =
+						new ArrayList<HashMap<String, String>>();
+				List<BluetoothGattCharacteristic> gattCharacteristics =
+						gattService.getCharacteristics();
+				ArrayList<BluetoothGattCharacteristic> charas =
+						new ArrayList<BluetoothGattCharacteristic>();
 
-			// Loops through available Characteristics.
-			for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
-				Log.e(TAG, "BluetoothCharacteristic: " + gattCharacteristic.getUuid().toString());
-				charas.add(gattCharacteristic);
-				HashMap<String, String> currentCharaData = new HashMap<String, String>();
-				uuid = gattCharacteristic.getUuid().toString();
-				currentCharaData.put(
-						LIST_NAME, BLGattAttributes.lookup(uuid, unknownCharaString));
-				currentCharaData.put(LIST_UUID, uuid);
-				gattCharacteristicGroupData.add(currentCharaData);
+				// Loops through available Characteristics.
+				for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
+					Log.e(TAG, "BluetoothCharacteristic: " + gattCharacteristic.getUuid().toString());
+					charas.add(gattCharacteristic);
+					HashMap<String, String> currentCharaData = new HashMap<String, String>();
+					uuid = gattCharacteristic.getUuid().toString();
+					currentCharaData.put(
+							LIST_NAME, BLGattAttributes.lookup(uuid, unknownCharaString));
+					currentCharaData.put(LIST_UUID, uuid);
+					gattCharacteristicGroupData.add(currentCharaData);
+				}
+				mGattCharacteristics.add(charas);
+				gattCharacteristicData.add(gattCharacteristicGroupData);
 			}
-			mGattCharacteristics.add(charas);
-			gattCharacteristicData.add(gattCharacteristicGroupData);
 
 		}
 
@@ -435,46 +467,80 @@ public class BLESelect extends Activity {
 		);*/
 		//mGattServicesList.setAdapter(gattServiceAdapter);
 		if (mGattCharacteristics != null) {
-			final BluetoothGattCharacteristic characteristic =
-					mGattCharacteristics.get(2).get(0
-					);
-			final int charaProp = characteristic.getProperties();
-			if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
-				// If there is an active notification on a characteristic, clear
-				// it first so it doesn't update the data field on the user interface.
-				if (mNotifyCharacteristic != null) {
-					//mBluetoothLeService.setCharacteristicNotification(mNotifyCharacteristic, false);
-					//mNotifyCharacteristic = null;
+
+			if (BLService.UUID_STM32_ACCELEROMETER_PARAMETER.equals(mGattCharacteristics.get(0).get(0).getUuid())) {
+				final BluetoothGattCharacteristic characteristic = mGattCharacteristics.get(0).get(0);
+
+
+				final int charaProp = characteristic.getProperties();
+
+
+				if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
+					// If there is an active notification on a characteristic, clear
+					// it first so it doesn't update the data field on the user interface.
+					if (mNotifyCharacteristic != null) {
+						//mBluetoothLeService.setCharacteristicNotification(mNotifyCharacteristic, false);
+						//mNotifyCharacteristic = null;
+					}
+					mBluetoothLeService.readCharacteristic(characteristic);
+
 				}
-				mBluetoothLeService.readCharacteristic(characteristic);
 
+				if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
+					mNotifyCharacteristic = characteristic;
+					BluetoothGattDescriptor descriptor = new BluetoothGattDescriptor(
+							UUID.fromString(BLGattAttributes.STM32_ACCELEROMETER_PARAMETER), BluetoothGattDescriptor.PERMISSION_READ);
+
+					characteristic.addDescriptor(descriptor);
+					mBluetoothLeService.setCharacteristicNotification(characteristic, true);
+				}
 			}
-			if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
-				mNotifyCharacteristic = characteristic;
-				BluetoothGattDescriptor descriptor = new BluetoothGattDescriptor(
-						UUID.fromString(BLGattAttributes.STM32_ACCELEROMETER_PARAMETER), 1);
+			if (BLService.UUID_STM32_WRITE_TO_DEVICE.equals(mGattCharacteristics.get(0).get(1).getUuid())) {
+				characteristic_write = mGattCharacteristics.get(0).get(1);
+				final int charaProp2 = characteristic_write.getProperties();
+				//characteristic_write.setValue(mGattCharacteristics.get(0).get(0).getValue());
+				//characteristic_write.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
 
-				characteristic.addDescriptor(descriptor);
+				if ((charaProp2 | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
 
-				mBluetoothLeService.setCharacteristicNotification(characteristic, true);
+					BluetoothGattDescriptor descriptor2 = new BluetoothGattDescriptor(
+							UUID.fromString(BLGattAttributes.STM32_WRITE_TO_DEVICE), BluetoothGattDescriptor.PERMISSION_WRITE);
+
+					characteristic_write.addDescriptor(descriptor2);
+
+					mBluetoothLeService.setCharacteristicNotification(characteristic_write, true);
+				}
+				/*if ((charaProp2 | BluetoothGattCharacteristic.PROPERTY_WRITE) > 0) {
+
+					mBluetoothLeService.writeCharacteristic(characteristic_write,"---");
+
+				}
+
 			}
 			//return true;
+			/*
 			for (BluetoothGattDescriptor descriptor : characteristic.getDescriptors()) {
 				Log.e(TAG, "BluetoothGattDescriptor: " + descriptor.getUuid().toString());
+			}*/
 			}
 		}
+
+
+
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		int id = item.getItemId();
 		if (id == R.id.action_log) {
+
+
 			Intent i = new Intent(getApplicationContext(),Display_items.class);
 			startActivity(i);
 		}else if(id==R.id.scanning){
 				//scanAllBtn.setActionView(R.layout.actionbar_indeterminate_progress);
 			    menu_bleselect.findItem(R.id.scanning).setActionView(R.layout.actionbar_indeterminate_progress);
-				scanLeDevice();
+			scanLeDevice();
 			    handler_scanning.postDelayed(updateTask_scanning, 100);
 				/*try {
 
@@ -492,21 +558,23 @@ public class BLESelect extends Activity {
 					textStatus.setText("No Memory Device");
 				} else {
 					scanLeDevice();
+					registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 					ConnessioneBLEState = mBluetoothLeService.connect(mDeviceAddress);
 					menu_bleselect.findItem(R.id.connect_memory).setTitle("Disconnect");
 				}
 			}else{
+				unregisterReceiver(mGattUpdateReceiver);
 				mBluetoothLeService.disconnect();
 				ConnessioneBLEState=false;
 				mBluetoothLeService.close();
-				parametro1.setText("");
-				uuidTv.setText("");
+				empty_View_disconnect();
 				manager=new SQLIte_manager(BLESelect.this);
 				manager.open_DB();
 				manager.update_DataDisconnect(manager.getHighestID(), date);
 				manager.update_RssiDisconnect(manager.getHighestID(), rssi_avg);
 				menu_bleselect.findItem(R.id.connect_memory).setTitle(R.string.connect_Memory);
 				generateTone(330, 250).play();
+				mBluetoothLeService.disconnect();
 
 			}
 		}
@@ -527,6 +595,7 @@ public class BLESelect extends Activity {
 			date = (DateFormat.format("dd-MM-yyyy HH:mm:ss", new java.util.Date()).toString());
 			data_ora.setText(date);
 			textStatus.setText("STATE: " + mBluetoothLeService.BLE_STATUS_CONNECTION_STRING);
+
 			handler.postDelayed(this,1000);
 		}
 	};
@@ -556,9 +625,15 @@ public class BLESelect extends Activity {
 		parametro1 = (TextView) findViewById(R.id.param1);
 		data_ora=(TextView)findViewById(R.id.textDataOra);
 		textStatus=(TextView)findViewById(R.id.textStatus);
+		textTodevice=(TextView)findViewById(R.id.textTodevice);
 		handler.postDelayed(updateTask, 1000);
 		//********************
 		readConnDevice();
+		//toast_notify("OnCreate");
+
+
+
+
 		/*
 				Timer mNewTimer = new Timer();
 				mNewTimer.schedule(new TimerTask() {

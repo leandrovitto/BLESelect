@@ -16,9 +16,12 @@
 
 package com.ble;
 
+import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -33,10 +36,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
+import android.support.v4.app.NotificationCompat;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.redbear.bleselect.R;
 
 
 /**
@@ -50,6 +55,11 @@ public class BLService extends Service {
 	private BluetoothAdapter mBluetoothAdapter;
 	private String mBluetoothDeviceAddress;
 	private BluetoothGatt mBluetoothGatt;
+
+	NotificationCompat.Builder mBuilder;
+	PendingIntent resultPendingIntent;
+	int mNotificationId;
+	NotificationManager mNotifyMgr;
 /*
 	SQLIte_manager manager;
 	SQLite_helper hlep;
@@ -60,20 +70,22 @@ public class BLService extends Service {
 	public final static String ACTION_GATT_SERVICES_DISCOVERED = "ACTION_GATT_SERVICES_DISCOVERED";
 	public final static String ACTION_GATT_RSSI = "ACTION_GATT_RSSI";
 	public final static String ACTION_DATA_AVAILABLE = "ACTION_DATA_AVAILABLE";
+	public final static String ACTION_GATT_WRTING="ACTION_GATT_WRTING";
 	public final static String EXTRA_DATA = "EXTRA_DATA";
 
 	public String BLE_STATUS_CONNECTION_STRING="";
+	public String BLE_STATUS_WRITING_STRING="";
+	public String add="";
 	public final static String EXTRA_RSSI="EXTRA_RSSI";
-	/*public final static UUID UUID_BLE_SHIELD_TX = UUID
-			.fromString(RBLGattAttributes.BLE_SHIELD_TX);
-	public final static UUID UUID_BLE_SHIELD_RX = UUID
-			.fromString(RBLGattAttributes.BLE_SHIELD_RX);
-	public final static UUID UUID_BLE_SHIELD_SERVICE = UUID
-			.fromString(RBLGattAttributes.BLE_SHIELD_SERVICE);
-	public final static UUID UUID_HEART_RATE_MEASUREMENT =
-			UUID.fromString(RBLGattAttributes.HEART_RATE_MEASUREMENT);*/
+
 	public final static UUID UUID_STM32_ACCELEROMETER_PARAMETER =
 			UUID.fromString(BLGattAttributes.STM32_ACCELEROMETER_PARAMETER);
+
+	public final static UUID UUID_STM32_WRITE_TO_DEVICE =
+			UUID.fromString(BLGattAttributes.STM32_WRITE_TO_DEVICE);
+
+	public final static UUID UUID_SERVICE_STM32 =
+			UUID.fromString(BLGattAttributes.SERVICE_STM32);
 
 	private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
 		@Override
@@ -86,6 +98,9 @@ public class BLService extends Service {
 				broadcastUpdate(intentAction);
 				Log.i(TAG, "Connected to GATT server.");
 				BLE_STATUS_CONNECTION_STRING="Connected to GATT server STM32.";
+
+				mBuilder.setContentText(BLE_STATUS_CONNECTION_STRING);
+				mNotifyMgr.notify(mNotificationId, mBuilder.build());
 
 				// Attempts to discover services after successful connection.
 				Log.i(TAG, "Attempting to start service discovery:"
@@ -137,6 +152,16 @@ public class BLService extends Service {
 			broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
 		}
 
+		@Override
+		public void onCharacteristicWrite(BluetoothGatt gatt,
+										  BluetoothGattCharacteristic characteristic, int status) {
+			BLE_STATUS_WRITING_STRING="Write:" + add +" State:"+ status;
+			Log.w("ADC3",BLE_STATUS_WRITING_STRING);
+			if (status == BluetoothGatt.GATT_SUCCESS) {
+
+				broadcastUpdate(ACTION_GATT_WRTING);
+			}
+		}
 
 
 
@@ -231,6 +256,27 @@ public class BLService extends Service {
 
 	@Override
 	public IBinder onBind(Intent intent) {
+		mBuilder =
+				new NotificationCompat.Builder(this)
+						.setSmallIcon(R.drawable.ic_launcher)
+						.setContentTitle("BLE Stm32")
+						.setContentText("").setAutoCancel(true);
+		mNotificationId = 001;
+		Intent resultIntent = new Intent(this, BLESelect.class);
+
+		//NOTIFICATION INTENTE
+		resultPendingIntent =
+				PendingIntent.getActivity(
+						this,
+						0,
+						resultIntent,
+						PendingIntent.FLAG_UPDATE_CURRENT
+				);
+
+		mBuilder.setContentIntent(resultPendingIntent);
+		mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+
 		return mBinder;
 	}
 
@@ -340,6 +386,8 @@ public class BLService extends Service {
 		}
 		mBluetoothGatt.disconnect();
 		BLE_STATUS_CONNECTION_STRING="Disconnect...";
+		mBuilder.setContentText(BLE_STATUS_CONNECTION_STRING);
+		mNotifyMgr.notify(mNotificationId, mBuilder.build());
 	}
 
 	/**
@@ -370,6 +418,21 @@ public class BLService extends Service {
 		}
 
 		mBluetoothGatt.readCharacteristic(characteristic);
+	}
+
+
+	public void writeCharacteristic(BluetoothGattCharacteristic characteristic,String value) {
+		if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+			Log.w(TAG, "BluetoothAdapter not initialized Characteristic");
+			return;
+		}
+		if (UUID_STM32_WRITE_TO_DEVICE.equals(characteristic.getUuid())) {
+			add=value;
+			byte[] dataByte = value.getBytes();
+			characteristic.setValue(dataByte);
+			characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+			mBluetoothGatt.writeCharacteristic(characteristic);
+		}
 	}
 
 	public void readRssi() {
@@ -412,6 +475,14 @@ public class BLService extends Service {
 			descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
 			mBluetoothGatt.writeDescriptor(descriptor);
 		}
+
+		if (UUID_STM32_WRITE_TO_DEVICE.equals(characteristic.getUuid())) {
+			BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
+					UUID.fromString(BLGattAttributes.STM32_WRITE_TO_DEVICE));
+			descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+			mBluetoothGatt.writeDescriptor(descriptor);
+		}
+
 
 
 	}

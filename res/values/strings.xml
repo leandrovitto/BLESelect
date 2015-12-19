@@ -6,9 +6,9 @@
     <string name="lastConnectLab">Memory Device:</string>
 
     <!--MENU BLE SELECT-->
-    <string name="connect_Memory">Connect Memory Device</string>
-    <string name="log">Log DataBase</string>
-    <string name="scanning">Scan Device BLE</string>
+    <string name="connect_Memory">Connect Mem Dev</string>
+    <string name="log">Log DB</string>
+    <string name="scanning">Scan BLE</string>
 
      <!--MENU SQL-->
     <string name="back">back</string>

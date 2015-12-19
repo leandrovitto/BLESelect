@@ -21,7 +21,6 @@ public final class R {
     }
     public static final class drawable {
         public static final int ic_launcher=0x7f020000;
-        public static final int red_button22=0x7f020001;
     }
     public static final class id {
         public static final int Data_Connessione=0x7f080005;
@@ -29,23 +28,24 @@ public final class R {
         public static final int Dev=0x7f080009;
         public static final int Rssi_Conn=0x7f080006;
         public static final int Rssi_Disc=0x7f080008;
-        public static final int action_log=0x7f080012;
-        public static final int back=0x7f080013;
-        public static final int by_id=0x7f080014;
-        public static final int connect_memory=0x7f080010;
-        public static final int delete_all=0x7f080015;
+        public static final int action_log=0x7f080013;
+        public static final int back=0x7f080014;
+        public static final int by_id=0x7f080015;
+        public static final int connect_memory=0x7f080011;
+        public static final int delete_all=0x7f080016;
         public static final int deviceAddr=0x7f080002;
         public static final int deviceName=0x7f080001;
         public static final int identifier=0x7f080004;
-        public static final int lastDevice=0x7f08000b;
+        public static final int lastDevice=0x7f08000c;
         public static final int listView=0x7f080000;
         public static final int listView_sql=0x7f080003;
-        public static final int param1=0x7f08000e;
-        public static final int scanning=0x7f080011;
-        public static final int textDataOra=0x7f08000f;
-        public static final int textStatus=0x7f08000c;
-        public static final int textView=0x7f08000a;
-        public static final int uuid=0x7f08000d;
+        public static final int param1=0x7f080010;
+        public static final int scanning=0x7f080012;
+        public static final int textDataOra=0x7f08000a;
+        public static final int textStatus=0x7f08000d;
+        public static final int textTodevice=0x7f08000e;
+        public static final int textView=0x7f08000b;
+        public static final int uuid=0x7f08000f;
     }
     public static final class layout {
         public static final int actionbar_indeterminate_progress=0x7f030000;

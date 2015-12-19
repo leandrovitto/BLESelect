@@ -13,7 +13,7 @@
     <eat-comment/>
     <string name="app_name">BLE Stm32</string>
     <string name="back">back</string>
-    <string name="connect_Memory">Connect Memory Device</string>
+    <string name="connect_Memory">Connect Mem Dev</string>
     <string name="connected">Connected</string>
     <string name="delall">Delete All</string>
     <string name="disconnected">Disconnected</string>
@@ -21,10 +21,10 @@
     <string name="label_device_address">Device address:</string>
     <string name="label_state">State:</string>
     <string name="lastConnectLab">Memory Device:</string>
-    <string name="log">Log DataBase</string>
+    <string name="log">Log DB</string>
     <string name="no_connected">No Connected</string>
     <string name="no_data">No data</string>
-    <string name="scanning">Scan Device BLE</string>
+    <string name="scanning">Scan BLE</string>
     <string name="sortbyid">sort by ID</string>
     <string name="state">State:</string>
     <string name="title">BLE</string>
